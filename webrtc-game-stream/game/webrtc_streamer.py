@@ -93,6 +93,12 @@ class WebRTCStreamer:
         self.webrtc = self.pipe.get_by_name("webrtc")
         self.data_channel = None
         
+        # Configure STUN and TURN servers
+        print("[STREAMER] Configuring ICE servers...")
+        self.webrtc.set_property("stun-server", "stun://stun.l.google.com:19302")
+        self.webrtc.set_property("turn-server", "turn://webrtc:SecurePassword123@dockerstream1.fyre.ibm.com:443")
+        print("[STREAMER] ICE servers configured")
+        
         # Connect WebRTC signals
         print("[STREAMER] Connecting WebRTC signals...")
         self.webrtc.connect("on-negotiation-needed", self.on_negotiation_needed)
