@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>WebRTC Game Stream</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #1a1a1a;
+      color: #fff;
+      font-family: Arial, sans-serif;
+    }
+    #container {
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+    h1 {
+      text-align: center;
+      color: #4CAF50;
+    }
+    #v {
+      width: 100%;
+      max-width: 1280px;
+      background: #000;
+      display: block;
+      margin: 20px auto;
+      border: 2px solid #4CAF50;
+      border-radius: 8px;
+    }
+    #status {
+      text-align: center;
+      padding: 10px;
+      background: #333;
+      border-radius: 4px;
+      margin: 10px 0;
+    }
+    .info {
+      background: #2a2a2a;
+      padding: 15px;
+      border-radius: 4px;
+      margin: 10px 0;
+    }
+    .info h3 {
+      margin-top: 0;
+      color: #4CAF50;
+    }
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin: 10px 0;
+    }
+    .control-item {
+      background: #333;
+      padding: 8px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <h1>🎮 WebRTC Game Stream</h1>
+    <div id="status">Connecting...</div>
+    <video id="v" autoplay playsinline muted></video>
+    
+    <div class="info">
+      <h3>Controls</h3>
+      <div class="controls">
+        <div class="control-item"><strong>WASD:</strong> Movement</div>
+        <div class="control-item"><strong>Arrow Keys:</strong> Alternative movement</div>
+        <div class="control-item"><strong>Space:</strong> Jump/Action</div>
+        <div class="control-item"><strong>Enter:</strong> Confirm</div>
+        <div class="control-item"><strong>Escape:</strong> Menu</div>
+        <div class="control-item"><strong>Mouse:</strong> Look/Aim</div>
+      </div>
+    </div>
+
+    <div class="info">
+      <h3>Instructions</h3>
+      <ul>
+        <li>Click on the video to focus and enable input</li>
+        <li>Your keyboard and mouse inputs will be sent to the game</li>
+        <li>Low latency streaming via WebRTC</li>
+      </ul>
+    </div>
+  </div>
+  <script src="client.js"></script>
+</body>
+</html>

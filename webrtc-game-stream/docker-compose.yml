@@ -1,0 +1,32 @@
+services:
+  signaling:
+    build: ./signaling
+    ports:
+      - "9000:9000"
+    networks: [qa-net]
+
+  game:
+    build: ./game
+    depends_on: [signaling]
+    networks: [qa-net]
+    environment:
+      - SIGNALING_URL=ws://signaling:9000
+      - ROOM=room1
+      - DISPLAY=:99
+      # Snake game running in xterm terminal
+      - GAME_CMD=xterm -maximized -e /app/snake.sh
+    # Needed for input injection via uinput:
+    privileged: true
+    devices:
+      - /dev/uinput:/dev/uinput
+
+  web:
+    build: ./web
+    depends_on: [signaling]
+    ports:
+      - "8080:80"
+    networks: [qa-net]
+
+networks:
+  qa-net:
+    driver: bridge
