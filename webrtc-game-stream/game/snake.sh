@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Snake in Bash - terminal version
-# Controls: Arrow keys or W/A/S/D (H/J/K/L). Pause 'p', Quit 'q'.
+# Snake in Bash (auto-restart + last-score banner)
+# Controls: Arrow keys or W/A/S/D (H/J/K/L). Pause 'P', Quit 'Q'.
 
 set -u
 
-# ---------- Terminal helpers ----------
+# =============== Terminal helpers ===============
 cursor_off() { tput civis 2>/dev/null || printf '\e[?25l'; }
 cursor_on()  { tput cnorm 2>/dev/null || printf '\e[?25h'; }
 move()       { printf '\e[%d;%dH' "$1" "$2"; }   # move row col
@@ -17,70 +17,39 @@ restore_terminal() {
   stty echo -icanon time 0 min 0 2>/dev/null
   cursor_on
   reset_fmt
+  printf '\e[?25h'  # ensure cursor visible even if tput failed
 }
 
-die() {
-  restore_terminal
-  move "$STATUS_LINE" 1
-  reset_fmt
-  echo
-  exit "${1:-0}"
-}
+quit() { restore_terminal; echo; exit 0; }
+trap 'quit' INT TERM  # SIGINT/SIGTERM clean exit
 
-trap 'die 0' EXIT INT TERM
+# =============== Globals (persistent across rounds) ===============
+LAST_SCORE=0
+USER_QUIT=0
 
-# ---------- Layout ----------
-COLS=$(tput cols)
-LINES=$(tput lines)
+# =============== Round-scoped variables (re-initialized each round) ===============
+COLS=0 LINES=0
+LEFT=1 TOP=1 RIGHT=0 BOTTOM=0 STATUS_LINE=0
+PLAY_W=0 PLAY_H=0
 
-# Border rectangle; status at last line
-LEFT=1
-TOP=1
-RIGHT=$COLS
-BOTTOM=$((LINES - 1))     # bottom border line
-STATUS_LINE=$LINES
-
-PLAY_W=$((RIGHT - LEFT - 1))
-PLAY_H=$((BOTTOM - TOP - 1))
-
-if (( PLAY_W < 20 || PLAY_H < 10 )); then
-  echo "Terminal too small. Please resize to at least ~22x12."
-  exit 1
-fi
-
-# ---------- Game state ----------
-# Snake body stored as parallel arrays of coordinates (head is index 0)
+# Snake body arrays (head at index 0)
 declare -a SX=()
 declare -a SY=()
 SNAKE_LEN=3
+HEAD_X=0 HEAD_Y=0 DIR="R"    # U/D/L/R
 
-# Start position roughly centered
-HEAD_X=$(( LEFT + 1 + PLAY_W / 2 ))
-HEAD_Y=$(( TOP + 1 + PLAY_H / 2 ))
-DIR="R"   # U/D/L/R
+FOOD_X=0 FOOD_Y=0
+SCORE=0 PAUSED=0 GAME_OVER=0
 
-# Initialize snake horizontal to the left
-SX=("$HEAD_X" $((HEAD_X-1)) $((HEAD_X-2)))
-SY=("$HEAD_Y" "$HEAD_Y" "$HEAD_Y")
-
-# Food
-FOOD_X=0
-FOOD_Y=0
-
-SCORE=0
-PAUSED=0
-GAME_OVER=0
-
-# Speed tiers (strings for read -t)
+# Speed tiers (strings for 'read -t')
 SPEED=( "0.12" "0.11" "0.10" "0.09" "0.08" "0.07" "0.06" "0.055" "0.05" "0.045" "0.04" "0.035" "0.03" )
-
 tick_time() {
   local tier=$(( SCORE / 50 ))
   (( tier >= ${#SPEED[@]} )) && tier=$((${#SPEED[@]} - 1))
   echo "${SPEED[$tier]}"
 }
 
-# ---------- Drawing ----------
+# =============== Drawing ===============
 draw_border() {
   # Top
   move "$TOP" "$LEFT";       printf '+'
@@ -104,13 +73,22 @@ status_line() {
   reset_fmt
   printf " Score: "
   bold; printf "%d" "$SCORE"; reset_fmt
+  printf "    Last: "
+  bold; printf "%d" "$LAST_SCORE"; reset_fmt
   printf "    Controls: ↑↓←→ / WASD (HJKL)   Pause: P   Quit: Q  "
   if (( PAUSED )); then
     bold; color 3; printf "   [PAUSED]"; reset_fmt
   fi
-  # Clear remainder of line
-  local rem=$(( COLS - 1 - $(tput cols 2>/dev/null || echo 0) ))
-  printf '\r'
+  printf '\e[K'  # clear to end of line
+}
+
+show_last_score_banner() {
+  move "$STATUS_LINE" 1
+  reset_fmt
+  bold; color 2
+  printf " Last game score - %d " "$LAST_SCORE"
+  reset_fmt
+  printf '\e[K'
 }
 
 draw_cell() {
@@ -119,6 +97,16 @@ draw_cell() {
   printf "%s" "$ch"
 }
 
+draw_snake_initial() {
+  color 6
+  draw_cell "${SX[0]}" "${SY[0]}" "O"   # head
+  for ((i=1; i<${#SX[@]}; i++)); do
+    draw_cell "${SX[i]}" "${SY[i]}" "o" # body
+  done
+  reset_fmt
+}
+
+# =============== Helpers ===============
 is_on_snake() {
   local x=$1 y=$2
   local i
@@ -135,7 +123,6 @@ place_food() {
   while :; do
     x=$(( LEFT + 1 + (RANDOM % PLAY_W) ))
     y=$(( TOP  + 1 + (RANDOM % PLAY_H) ))
-    # Ensure not on snake
     if ! is_on_snake "$x" "$y"; then
       FOOD_X=$x; FOOD_Y=$y
       break
@@ -146,21 +133,9 @@ place_food() {
   reset_fmt
 }
 
-draw_snake_initial() {
-  color 6
-  # Head
-  draw_cell "${SX[0]}" "${SY[0]}" "O"
-  # Body
-  for ((i=1; i<${#SX[@]}; i++)); do
-    draw_cell "${SX[i]}" "${SY[i]}" "o"
-  done
-  reset_fmt
-}
-
-update_status() { status_line; }
-
-# ---------- Input ----------
+# =============== Input ===============
 # Reads a direction if available; returns via global NEW_DIR (U/D/L/R or empty)
+NEW_DIR=""
 read_input() {
   NEW_DIR=""
   local key k1 k2
@@ -184,18 +159,17 @@ read_input() {
     [DdLl]) NEW_DIR="R" ;;
     [AaHh]) NEW_DIR="L" ;;
     [Pp])   PAUSED=$((1-PAUSED));;
-    [Qq])   GAME_OVER=1 ;;
+    [Qq])   GAME_OVER=1; USER_QUIT=1 ;;
   esac
 }
 
-# Opposite direction check
 is_opposite() {
   local a=$1 b=$2
   [[ ( "$a" == "U" && "$b" == "D" ) || ( "$a" == "D" && "$b" == "U" ) || \
      ( "$a" == "L" && "$b" == "R" ) || ( "$a" == "R" && "$b" == "L" ) ]]
 }
 
-# ---------- Movement & game loop ----------
+# =============== Simulation step ===============
 step() {
   local dx=0 dy=0
   case "$DIR" in
@@ -221,10 +195,9 @@ step() {
   SX=("$nx" "${SX[@]}")
   SY=("$ny" "${SY[@]}")
 
-  # Draw head
+  # Draw head and shift previous head to body
   color 6
   draw_cell "$nx" "$ny" "O"
-  # Old head becomes body
   if ((${#SX[@]} > 1)); then
     draw_cell "${SX[1]}" "${SY[1]}" "o"
   fi
@@ -235,9 +208,9 @@ step() {
     SCORE=$((SCORE + 10))
     SNAKE_LEN=$((SNAKE_LEN + 1))
     place_food
-    update_status
+    status_line
   else
-    # Remove tail (erase)
+    # Erase tail
     local tail_i=$((${#SX[@]} - 1))
     local tx=${SX[$tail_i]}
     local ty=${SY[$tail_i]}
@@ -247,6 +220,7 @@ step() {
   fi
 }
 
+# =============== End-of-round UI ===============
 game_over_screen() {
   color 1; bold
   local msg=" GAME OVER "
@@ -254,50 +228,97 @@ game_over_screen() {
   local x=$(( LEFT + (PLAY_W/2) - (${#msg}/2) + 1 ))
   move "$y" "$x"; printf "%s" "$msg"
   reset_fmt
-  move "$((y+1))" "$((x-8))"
-  printf " Final Score: %d   Press any key to exit " "$SCORE"
-  # Wait for a key
-  stty -echo -icanon time 0 min 1 2>/dev/null
-  dd bs=1 count=1 status=none 2>/dev/null
+  move "$((y+1))" "$((x-10))"
+  printf " Final Score: %d   (Restarting... Press Q to quit) " "$SCORE"
 }
 
-# ---------- Start ----------
-clear_scr
-cursor_off
-stty -echo -icanon time 0 min 0 2>/dev/null
+# =============== Round initialization ===============
+init_round() {
+  clear_scr
+  cursor_off
+  stty -echo -icanon time 0 min 0 2>/dev/null
 
-draw_border
-status_line
-draw_snake_initial
-place_food
+  COLS=$(tput cols)
+  LINES=$(tput lines)
 
-# Main loop
-while (( ! GAME_OVER )); do
-  read_input
+  LEFT=1
+  TOP=1
+  RIGHT=$COLS
+  BOTTOM=$((LINES - 1))     # bottom border line
+  STATUS_LINE=$LINES
 
-  if (( GAME_OVER )); then
-    break
+  PLAY_W=$((RIGHT - LEFT - 1))
+  PLAY_H=$((BOTTOM - TOP - 1))
+
+  if (( PLAY_W < 20 || PLAY_H < 10 )); then
+    restore_terminal
+    echo "Terminal too small. Please resize to at least ~22x12."
+    exit 1
   fi
 
-  # Direction update (avoid reversing into yourself)
-  if [[ -n "${NEW_DIR}" ]] && ! is_opposite "$DIR" "$NEW_DIR"; then
-    DIR="$NEW_DIR"
+  # Reset state
+  USER_QUIT=0
+  SNAKE_LEN=3
+  HEAD_X=$(( LEFT + 1 + PLAY_W / 2 ))
+  HEAD_Y=$(( TOP + 1 + PLAY_H / 2 ))
+  DIR="R"
+  SX=("$HEAD_X" $((HEAD_X-1)) $((HEAD_X-2)))
+  SY=("$HEAD_Y" "$HEAD_Y" "$HEAD_Y")
+  FOOD_X=0
+  FOOD_Y=0
+  SCORE=0
+  PAUSED=0
+  GAME_OVER=0
+
+  draw_border
+  status_line
+  draw_snake_initial
+  place_food
+}
+
+# =============== Main: infinite rounds until Q ===============
+while :; do
+  init_round
+
+  # ---- Round loop ----
+  while (( ! GAME_OVER )); do
+    read_input
+
+    (( GAME_OVER )) && break
+
+    # Update direction (no 180° turns)
+    if [[ -n "${NEW_DIR:-}" ]] && ! is_opposite "$DIR" "$NEW_DIR"; then
+      DIR="$NEW_DIR"
+    fi
+
+    if (( PAUSED )); then
+      IFS= read -rsn1 -t 0.1 key && {
+        case "$key" in
+          [Pp]) PAUSED=0 ;;
+          [Qq]) GAME_OVER=1; USER_QUIT=1 ;;
+        esac
+      }
+      status_line
+      continue
+    fi
+
+    step
+  done
+
+  # ---- End-of-round banner + last score ----
+  game_over_screen
+  LAST_SCORE=$SCORE
+  show_last_score_banner
+
+  # Small pause before auto-restart (unless Q pressed)
+  # During this pause, allow user to press Q to quit immediately.
+  for _ in {1..20}; do
+    IFS= read -rsn1 -t 0.1 key && [[ "$key" =~ [Qq] ]] && USER_QUIT=1 && break
+  done
+
+  if (( USER_QUIT )); then
+    quit
   fi
 
-  if (( PAUSED )); then
-    # While paused, block softly for a key and only toggle with P/Q
-    IFS= read -rsn1 -t 0.1 key && {
-      case "$key" in
-        [Pp]) PAUSED=0 ;;
-        [Qq]) GAME_OVER=1 ;;
-      esac
-    }
-    update_status
-    continue
-  fi
-
-  step
+  # Loop continues → starts a fresh round
 done
-
-game_over_screen
-die 0
