@@ -149,11 +149,20 @@ async function start() {
   }, 10000); // 10 second timeout
 
   pc = new RTCPeerConnection({
-    iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+    iceServers: [
+      { urls: "stun:stun.l.google.com:19302" },
+      { 
+        urls: "turn:openrelay.metered.ca:80",
+        username: "openrelayproject",
+        credential: "openrelayproject"
+      },
+      {
+        urls: "turn:openrelay.metered.ca:443",
+        username: "openrelayproject",
+        credential: "openrelayproject"
+      }
+    ]
   });
-
-  // Add transceiver to receive video (required for proper H264 negotiation)
-  pc.addTransceiver("video", { direction: "recvonly" });
 
   // Handle data channel from peer (game creates it)
   pc.ondatachannel = (event) => {

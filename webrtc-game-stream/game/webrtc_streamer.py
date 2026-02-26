@@ -14,7 +14,7 @@ from evdev import UInput, ecodes as e
 Gst.init(None)
 GObject.threads_init()
 
-SIGNALING_URL = os.environ.get("SIGNALING_URL", "ws://signaling:9000")
+SIGNALING_URL = os.environ.get("SIGNALING_URL", "ws://localhost:9000")
 ROOM = os.environ.get("ROOM", "room1")
 DISPLAY = os.environ.get("DISPLAY", ":99")
 
@@ -73,67 +73,25 @@ class WebRTCStreamer:
         await self.ws.send(json.dumps({"room": ROOM, "type": "join", "data": "game"}))
 
     def build_pipeline(self):
-        # Create webrtcbin first, then link video source to it
-        self.pipe = Gst.Pipeline.new("webrtc-pipeline")
+        # Use gst-launch style pipeline - this ensures proper transceiver/MID creation
+        pipeline_str = f"""
+        webrtcbin name=webrtc bundle-policy=max-bundle
+        ximagesrc display-name={DISPLAY} use-damage=false ! 
+        video/x-raw,framerate=60/1 ! 
+        videoconvert ! 
+        queue ! 
+        vp8enc deadline=1 cpu-used=8 target-bitrate=6000000 keyframe-max-dist=60 ! 
+        rtpvp8pay pt=96 ! 
+        application/x-rtp,media=video,encoding-name=VP8,payload=96 ! 
+        webrtc.
+        """
         
-        # Create elements
-        webrtc = Gst.ElementFactory.make("webrtcbin", "webrtc")
-        webrtc.set_property("bundle-policy", "max-bundle")
+        print("[STREAMER] Creating pipeline from string...")
+        self.pipe = Gst.parse_launch(pipeline_str)
         
-        ximagesrc = Gst.ElementFactory.make("ximagesrc", "src")
-        ximagesrc.set_property("display-name", DISPLAY)
-        ximagesrc.set_property("use-damage", False)
-        
-        capsfilter = Gst.ElementFactory.make("capsfilter", "caps")
-        caps = Gst.Caps.from_string("video/x-raw,framerate=60/1,format=I420")
-        capsfilter.set_property("caps", caps)
-        
-        videoconvert = Gst.ElementFactory.make("videoconvert", "convert")
-        queue1 = Gst.ElementFactory.make("queue", "queue1")
-        
-        x264enc = Gst.ElementFactory.make("x264enc", "encoder")
-        x264enc.set_property("tune", "zerolatency")
-        x264enc.set_property("speed-preset", "ultrafast")
-        x264enc.set_property("bitrate", 6000)
-        x264enc.set_property("key-int-max", 60)
-        
-        h264parse = Gst.ElementFactory.make("h264parse", "parse")
-        h264parse.set_property("config-interval", -1)
-        
-        rtph264pay = Gst.ElementFactory.make("rtph264pay", "pay")
-        rtph264pay.set_property("config-interval", -1)
-        rtph264pay.set_property("pt", 96)
-        rtph264pay.set_property("aggregate-mode", 1)
-        
-        queue2 = Gst.ElementFactory.make("queue", "queue2")
-        
-        # Add all elements to pipeline
-        self.pipe.add(webrtc)
-        self.pipe.add(ximagesrc)
-        self.pipe.add(capsfilter)
-        self.pipe.add(videoconvert)
-        self.pipe.add(queue1)
-        self.pipe.add(x264enc)
-        self.pipe.add(h264parse)
-        self.pipe.add(rtph264pay)
-        self.pipe.add(queue2)
-        
-        # Link elements
-        ximagesrc.link(capsfilter)
-        capsfilter.link(videoconvert)
-        videoconvert.link(queue1)
-        queue1.link(x264enc)
-        x264enc.link(h264parse)
-        h264parse.link(rtph264pay)
-        rtph264pay.link(queue2)
-        
-        # Link to webrtcbin using request pad
-        queue2_src = queue2.get_static_pad("src")
-        webrtc_sink = webrtc.request_pad_simple("sink_%u")
-        if webrtc_sink:
-            queue2_src.link(webrtc_sink)
-        
-        self.webrtc = webrtc
+        # Get webrtc element reference
+        self.webrtc = self.pipe.get_by_name("webrtc")
+        self.data_channel = None
         
         # Connect WebRTC signals
         print("[STREAMER] Connecting WebRTC signals...")
@@ -141,9 +99,6 @@ class WebRTCStreamer:
         self.webrtc.connect("on-ice-candidate", self.on_ice_candidate)
         self.webrtc.connect("on-data-channel", self.on_data_channel_created)
         print("[STREAMER] Signals connected")
-        
-        # Data channel will be created by browser or after negotiation
-        self.data_channel = None
 
     def on_data_channel_created(self, element, channel):
         print("[STREAMER] Data channel created by peer")
