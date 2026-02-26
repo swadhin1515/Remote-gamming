@@ -151,11 +151,26 @@ async function start() {
   pc = new RTCPeerConnection({
     iceServers: [
       { urls: "stun:stun.l.google.com:19302" },
-      { 
-        urls: "turn:dockerstream1.fyre.ibm.com:443",
-        username: "webrtc",
-        credential: "SecurePassword123"
-      }
+      
+// TURN over TCP/UDP on port 443
+    {
+      urls: "turn:dockerstream1.fyre.ibm.com:443?transport=udp",
+      username: "webrtc",
+      credential: "SecurePassword123"
+    },
+    {
+      urls: "turn:dockerstream1.fyre.ibm.com:443?transport=tcp",
+      username: "webrtc",
+      credential: "SecurePassword123"
+    }
+
+// (Optional) If you enable TLS on coturn, add:
+    // {
+    //   urls: "turns:dockerstream1.fyre.ibm.com:5349",
+    //   username: "webrtc",
+    //   credential: "SecurePassword123"
+    // }
+
     ]
   });
 
