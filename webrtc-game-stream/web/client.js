@@ -1,4 +1,4 @@
-const video = document.getElementById("v");
+const video = document.getElementById("video");
 const status = document.getElementById("status");
 const room = "room1";
 
@@ -11,20 +11,75 @@ let pendingIce = [];
 let negotiationTimeout = null;
 let connectionTimeout = null;
 
+const ICE_SERVERS = [
+  { urls: "stun:stun.l.google.com:19302" },
+  {
+    urls: "turn:dockerstream1.fyre.ibm.com:443?transport=udp",
+    username: "webrtc",
+    credential: "SecurePassword123"
+  },
+  {
+    urls: "turn:dockerstream1.fyre.ibm.com:443?transport=tcp",
+    username: "webrtc",
+    credential: "SecurePassword123"
+  }
+];
+
 function setStatus(msg) {
   status.textContent = msg;
   console.log("[CLIENT]", msg);
 }
 
+// ─── PeerConnection factory ───────────────────────────────────────────────────
+function setupPeerConnection() {
+  if (pc) {
+    pc.ontrack = null;
+    pc.onicecandidate = null;
+    pc.oniceconnectionstatechange = null;
+    pc.ondatachannel = null;
+    try { pc.close(); } catch (_) {}
+  }
+  dc = null;
+
+  pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+
+  pc.ondatachannel = (event) => {
+    console.log("[CLIENT] Data channel received:", event.channel.label);
+    dc = event.channel;
+    setupDataChannel();
+  };
+
+  pc.ontrack = (ev) => {
+    console.log("[CLIENT] Track received");
+    video.srcObject = ev.streams[0];
+    setStatus("🎮 Video stream received — click to play");
+  };
+
+  pc.onicecandidate = (ev) => {
+    if (ev.candidate) {
+      ws.send(JSON.stringify({ room, type: "ice", data: ev.candidate }));
+    }
+  };
+
+  pc.oniceconnectionstatechange = () => {
+    console.log("[CLIENT] ICE state:", pc.iceConnectionState);
+    switch (pc.iceConnectionState) {
+      case "connected":   setStatus("✅ WebRTC connected"); break;
+      case "disconnected":setStatus("⚠️ Connection interrupted"); break;
+      case "failed":      setStatus("❌ Connection failed"); break;
+      case "closed":      setStatus("❌ Connection closed"); break;
+    }
+  };
+}
+
+// ─── WebSocket / signaling ────────────────────────────────────────────────────
 function connectWebSocket() {
   const wsUrl = `ws://${window.location.hostname}:9000`;
-  console.log("[CLIENT] Connecting to:", wsUrl);
   setStatus(`Connecting to ${wsUrl}...`);
 
-  // Add connection timeout
   connectionTimeout = setTimeout(() => {
     if (!ws || ws.readyState !== WebSocket.OPEN) {
-      setStatus("❌ Connection timeout - is signaling server running?");
+      setStatus("❌ Connection timeout — is signaling server running?");
       if (ws) ws.close();
     }
   }, 5000);
@@ -33,100 +88,75 @@ function connectWebSocket() {
 
   ws.onopen = async () => {
     clearTimeout(connectionTimeout);
-    console.log("[CLIENT] WebSocket connected!");
     setStatus("✅ Connected to signaling server");
     await start();
   };
 
-  ws.onerror = (err) => {
+  ws.onerror = () => {
     clearTimeout(connectionTimeout);
-    console.error("[CLIENT] WebSocket error:", err);
-    setStatus("❌ WebSocket error - cannot connect to signaling server");
+    setStatus("❌ WebSocket error");
   };
 
   ws.onclose = () => {
     clearTimeout(connectionTimeout);
-    console.log("[CLIENT] WebSocket closed");
-    setStatus("❌ Disconnected from signaling server");
-    
-    // Attempt reconnection after 3 seconds
-    setTimeout(() => {
-      setStatus("Attempting to reconnect...");
-      connectWebSocket();
-    }, 3000);
+    setStatus("❌ Disconnected — reconnecting in 3s...");
+    setTimeout(connectWebSocket, 3000);
   };
 
   ws.onmessage = async (msg) => {
     const m = JSON.parse(msg.data);
     if (m.room !== room) return;
 
-    // ---------- OFFER ----------
+    // ── OFFER ──────────────────────────────────────────────────────────────
     if (m.type === "offer") {
-      // Clear timeout since we got the offer
-      if (negotiationTimeout) {
-        clearTimeout(negotiationTimeout);
-        negotiationTimeout = null;
-      }
-
-      console.log("[CLIENT] Received offer");
+      if (negotiationTimeout) { clearTimeout(negotiationTimeout); negotiationTimeout = null; }
+      console.log("[CLIENT] Received offer — creating fresh PeerConnection");
       setStatus("Received offer, creating answer...");
 
-      try {
-        const offer = { type: "offer", sdp: m.data };
-        await pc.setRemoteDescription(offer);
+      // Always create a fresh PC so stale WebRTC state never blocks reconnects
+      setupPeerConnection();
+      pendingIce = [];
+      midHint = null;
 
-        // Defer MID discovery until transceivers are populated
+      try {
+        await pc.setRemoteDescription({ type: "offer", sdp: m.data });
+
         setTimeout(() => {
           const t = pc.getTransceivers().find(tr => tr.mid);
-          if (t) {
-            midHint = t.mid;
-            console.log("[CLIENT] Learned MID:", midHint);
-          }
+          if (t) { midHint = t.mid; console.log("[CLIENT] MID:", midHint); }
         }, 0);
 
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
+        ws.send(JSON.stringify({ room, type: "answer", data: answer.sdp }));
+        setStatus("Answer sent, waiting for ICE...");
 
-        ws.send(JSON.stringify({
-          room,
-          type: "answer",
-          data: answer.sdp
-        }));
-
-        console.log("[CLIENT] Answer sent");
-        setStatus("Answer sent, waiting for connection...");
-
-        // Apply any ICE that arrived early
         for (const c of pendingIce) {
           await pc.addIceCandidate(new RTCIceCandidate(c));
         }
         pendingIce = [];
-
       } catch (err) {
         console.error("[CLIENT] Offer/answer error:", err);
         setStatus(`❌ ${err.message}`);
       }
     }
 
-    // ---------- ICE ----------
+    // ── ICE ────────────────────────────────────────────────────────────────
     else if (m.type === "ice") {
       const incoming = m.data;
-
       const candInit = typeof incoming === "string"
         ? { candidate: incoming }
         : { ...incoming };
 
-      // Ensure Chrome requirements
       if (candInit.sdpMid == null && candInit.sdpMLineIndex == null) {
         if (midHint) candInit.sdpMid = midHint;
         else candInit.sdpMLineIndex = 0;
       }
 
-      if (!pc) {
+      if (!pc || !pc.remoteDescription) {
         pendingIce.push(candInit);
         return;
       }
-
       try {
         await pc.addIceCandidate(new RTCIceCandidate(candInit));
       } catch (err) {
@@ -136,183 +166,89 @@ function connectWebSocket() {
   };
 }
 
+// ─── Initial join ─────────────────────────────────────────────────────────────
 async function start() {
-  // Clear any existing timeout
-  if (negotiationTimeout) {
-    clearTimeout(negotiationTimeout);
-  }
-  
-  // Set timeout for negotiation
+  if (negotiationTimeout) clearTimeout(negotiationTimeout);
   negotiationTimeout = setTimeout(() => {
-    setStatus("❌ Connection timeout - no offer received from game");
-    console.error("[CLIENT] Negotiation timeout");
-  }, 10000); // 10 second timeout
+    setStatus("❌ No offer received — is the game running?");
+  }, 10000);
 
-  pc = new RTCPeerConnection({
-    iceServers: [
-      { urls: "stun:stun.l.google.com:19302" },
-      
-// TURN over TCP/UDP on port 443
-    {
-      urls: "turn:dockerstream1.fyre.ibm.com:443?transport=udp",
-      username: "webrtc",
-      credential: "SecurePassword123"
-    },
-    {
-      urls: "turn:dockerstream1.fyre.ibm.com:443?transport=tcp",
-      username: "webrtc",
-      credential: "SecurePassword123"
-    }
+  // Create initial PC so ICE candidates can be buffered before offer arrives
+  setupPeerConnection();
 
-// (Optional) If you enable TLS on coturn, add:
-    // {
-    //   urls: "turns:dockerstream1.fyre.ibm.com:5349",
-    //   username: "webrtc",
-    //   credential: "SecurePassword123"
-    // }
-
-    ]
-  });
-
-  // Game creates the data channel - receive it here
-  pc.ondatachannel = (event) => {
-    console.log("[CLIENT] Data channel received from game:", event.channel.label);
-    dc = event.channel;
-    setupDataChannel();
-  };
-
-  pc.ontrack = (ev) => {
-    console.log("[CLIENT] Track received");
-    video.srcObject = ev.streams[0];
-    setStatus("Video stream received, waiting for connection...");
-  };
-
-  pc.onicecandidate = (ev) => {
-    if (ev.candidate) {
-      ws.send(JSON.stringify({
-        room,
-        type: "ice",
-        data: ev.candidate
-      }));
-    }
-  };
-
-  // Monitor ICE connection state
-  pc.oniceconnectionstatechange = () => {
-    console.log("[CLIENT] ICE connection state:", pc.iceConnectionState);
-    
-    switch (pc.iceConnectionState) {
-      case "connected":
-        setStatus("✅ WebRTC connected");
-        break;
-      case "disconnected":
-        setStatus("⚠️ Connection interrupted");
-        break;
-      case "failed":
-        setStatus("❌ Connection failed - check network/firewall");
-        break;
-      case "closed":
-        setStatus("❌ Connection closed");
-        break;
-    }
-  };
-
-  // Join signaling room
-  ws.send(JSON.stringify({
-    room,
-    type: "join",
-    data: "web"
-  }));
-
-  console.log("[CLIENT] Waiting for offer from game...");
+  // Tell signaling we're here — game will send a fresh offer
+  ws.send(JSON.stringify({ room, type: "join", data: "web" }));
   setStatus("Waiting for game to send video offer...");
-
   installInputHandlers();
 }
 
+// ─── Data channel ─────────────────────────────────────────────────────────────
 function setupDataChannel() {
   dc.onopen = () => {
     console.log("[CLIENT] Data channel opened");
-    setStatus("✅ Connected! Click video to start playing");
+    setStatus("✅ Connected! Click video to lock mouse & start playing");
   };
-  
   dc.onclose = () => {
     console.log("[CLIENT] Data channel closed");
-    setStatus("❌ Connection lost");
+    setStatus("⚠️ Data channel closed");
   };
-  
   dc.onerror = (err) => {
     console.error("[CLIENT] Data channel error:", err);
-    setStatus("❌ Data channel error");
   };
 }
 
+// ─── Input handlers (installed once) ─────────────────────────────────────────
+let inputHandlersInstalled = false;
 function installInputHandlers() {
-  console.log("[CLIENT] Installing input handlers...");
-  
-  const GAME_KEYS = ["KeyW", "KeyA", "KeyS", "KeyD", "ArrowUp", "ArrowDown",
-                     "ArrowLeft", "ArrowRight", "Space", "Enter", "Escape",
-                     "KeyH", "KeyJ", "KeyK", "KeyL", "KeyP", "KeyQ"];
+  if (inputHandlersInstalled) return;
+  inputHandlersInstalled = true;
 
-  // Keyboard event handlers - listen on window to catch all key events
   window.addEventListener("keydown", (e) => {
-    if (GAME_KEYS.includes(e.code)) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    if (!dc || dc.readyState !== "open") {
-      console.log("[CLIENT] Key dropped - dc state:", dc ? dc.readyState : "null");
-      return;
-    }
-    console.log("[CLIENT] Sending key:", e.code);
-    setStatus(`🎮 Key: ${e.code}`);
-    dc.send(JSON.stringify({ t: "key", code: e.code, down: true }));
-  }, true); // capture phase
+    if (!dc || dc.readyState !== "open") return;
+    e.preventDefault();
+    e.stopPropagation();
+    dc.send(JSON.stringify({ t: "key", code: e.code, key: e.key, down: true }));
+  }, true);
 
   window.addEventListener("keyup", (e) => {
     if (!dc || dc.readyState !== "open") return;
-    dc.send(JSON.stringify({ t: "key", code: e.code, down: false }));
-  }, true); // capture phase
+    e.preventDefault();
+    e.stopPropagation();
+    dc.send(JSON.stringify({ t: "key", code: e.code, key: e.key, down: false }));
+  }, true);
 
-  // Mouse movement handler - only send when pointer is locked
   video.addEventListener("mousemove", (e) => {
     if (!dc || dc.readyState !== "open") return;
-    if (!document.pointerLockElement) return; // only when locked
+    if (document.pointerLockElement !== video) return;
     if (e.movementX === 0 && e.movementY === 0) return;
     dc.send(JSON.stringify({ t: "mouse", dx: e.movementX, dy: e.movementY }));
   });
-  
-  // Mouse button handlers
+
   video.addEventListener("mousedown", (e) => {
     if (!dc || dc.readyState !== "open") return;
-    
     e.preventDefault();
-    const btn = e.button === 0 ? "left" : "right";
-    dc.send(JSON.stringify({
-      t: "mouse",
-      btn: btn,
-      down: true
-    }));
+    const btn = { 0: "left", 1: "middle", 2: "right" }[e.button] || "left";
+    dc.send(JSON.stringify({ t: "mouse", btn, down: true }));
   });
-  
+
   video.addEventListener("mouseup", (e) => {
     if (!dc || dc.readyState !== "open") return;
-    
-    const btn = e.button === 0 ? "left" : "right";
-    dc.send(JSON.stringify({
-      t: "mouse",
-      btn: btn,
-      down: false
-    }));
+    const btn = { 0: "left", 1: "middle", 2: "right" }[e.button] || "left";
+    dc.send(JSON.stringify({ t: "mouse", btn, down: false }));
   });
-  
-  // Request pointer lock for better mouse control
+
+  video.addEventListener("wheel", (e) => {
+    if (!dc || dc.readyState !== "open") return;
+    e.preventDefault();
+    dc.send(JSON.stringify({ t: "wheel", dy: e.deltaY }));
+  }, { passive: false });
+
   video.addEventListener("click", () => {
-    video.requestPointerLock();
+    if (document.pointerLockElement !== video) video.requestPointerLock();
   });
-  
-  console.log("[CLIENT] Input handlers installed");
+
+  video.addEventListener("contextmenu", (e) => e.preventDefault());
 }
 
-// Start immediately
+// ─── Boot ─────────────────────────────────────────────────────────────────────
 connectWebSocket();

@@ -20,8 +20,8 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-COPY requirements.txt .
-RUN pip3 install --no-cache-dir -r requirements.txt
+COPY *.whl ./
+RUN pip3 install --no-cache-dir *.whl
 
 COPY webrtc_streamer.py start.sh snake.sh ./
 RUN chmod +x /app/start.sh /app/snake.sh
