@@ -174,16 +174,12 @@ async function start() {
     ]
   });
 
-  // Handle data channel from peer (game creates it)
+  // Game creates the data channel - receive it here
   pc.ondatachannel = (event) => {
-    console.log("[CLIENT] Data channel received from peer");
+    console.log("[CLIENT] Data channel received from game:", event.channel.label);
     dc = event.channel;
     setupDataChannel();
   };
-  
-  // Also create data channel ourselves (more reliable)
-  dc = pc.createDataChannel("input", { ordered: true });
-  setupDataChannel();
 
   pc.ontrack = (ev) => {
     console.log("[CLIENT] Track received");
@@ -254,42 +250,36 @@ function setupDataChannel() {
 function installInputHandlers() {
   console.log("[CLIENT] Installing input handlers...");
   
-  // Keyboard event handlers
-  document.addEventListener("keydown", (e) => {
-    if (!dc || dc.readyState !== "open") return;
-    
-    // Prevent default for game keys
-    if (["KeyW", "KeyA", "KeyS", "KeyD", "ArrowUp", "ArrowDown", 
-         "ArrowLeft", "ArrowRight", "Space", "Enter", "Escape"].includes(e.code)) {
+  const GAME_KEYS = ["KeyW", "KeyA", "KeyS", "KeyD", "ArrowUp", "ArrowDown",
+                     "ArrowLeft", "ArrowRight", "Space", "Enter", "Escape",
+                     "KeyH", "KeyJ", "KeyK", "KeyL", "KeyP", "KeyQ"];
+
+  // Keyboard event handlers - listen on window to catch all key events
+  window.addEventListener("keydown", (e) => {
+    if (GAME_KEYS.includes(e.code)) {
       e.preventDefault();
+      e.stopPropagation();
     }
-    
-    dc.send(JSON.stringify({
-      t: "key",
-      code: e.code,
-      down: true
-    }));
-  });
-  
-  document.addEventListener("keyup", (e) => {
+    if (!dc || dc.readyState !== "open") {
+      console.log("[CLIENT] Key dropped - dc state:", dc ? dc.readyState : "null");
+      return;
+    }
+    console.log("[CLIENT] Sending key:", e.code);
+    setStatus(`🎮 Key: ${e.code}`);
+    dc.send(JSON.stringify({ t: "key", code: e.code, down: true }));
+  }, true); // capture phase
+
+  window.addEventListener("keyup", (e) => {
     if (!dc || dc.readyState !== "open") return;
-    
-    dc.send(JSON.stringify({
-      t: "key",
-      code: e.code,
-      down: false
-    }));
-  });
-  
-  // Mouse movement handler
+    dc.send(JSON.stringify({ t: "key", code: e.code, down: false }));
+  }, true); // capture phase
+
+  // Mouse movement handler - only send when pointer is locked
   video.addEventListener("mousemove", (e) => {
     if (!dc || dc.readyState !== "open") return;
-    
-    dc.send(JSON.stringify({
-      t: "mouse",
-      dx: e.movementX,
-      dy: e.movementY
-    }));
+    if (!document.pointerLockElement) return; // only when locked
+    if (e.movementX === 0 && e.movementY === 0) return;
+    dc.send(JSON.stringify({ t: "mouse", dx: e.movementX, dy: e.movementY }));
   });
   
   // Mouse button handlers

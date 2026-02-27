@@ -51,3 +51,18 @@ Otherwise ICE will always fail.
 👉 TURN must be reachable on a public IP
 👉 TURN must advertise that same public IP
 👉 TURN must listen on all required ports, not only Docker ones
+
+
+Quick answers to likely questions
+
+
+Why was I seeing only 443?
+Because coturn was configured (or defaulted in your environment) to bind to 443. Your earlier connectivity tests were against 3478, which had nothing listening.
+
+
+Is 443 okay for TURN?
+Yes. It’s actually a good practice for NAT/firewall traversal. Many production setups use TURN on 443 specifically to punch through restrictive egress rules.
+
+
+Do I need to expose Docker ports?
+No. TURN runs on the host, not in your containers. Your game container streams via WebRTC; the browser retrieves media through TURN, not directly to the container.

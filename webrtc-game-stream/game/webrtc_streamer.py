@@ -9,7 +9,9 @@ gi.require_version("GstWebRTC", "1.0")
 gi.require_version("GstSdp", "1.0")
 from gi.repository import Gst, GObject, GstWebRTC, GstSdp
 
-from evdev import UInput, ecodes as e
+import subprocess
+import fcntl
+import termios
 
 Gst.init(None)
 GObject.threads_init()
@@ -18,46 +20,56 @@ SIGNALING_URL = os.environ.get("SIGNALING_URL", "ws://localhost:9000")
 ROOM = os.environ.get("ROOM", "room1")
 DISPLAY = os.environ.get("DISPLAY", ":99")
 
-# Simple virtual input device
-UI_CAPS = {
-    e.EV_KEY: [
-        e.KEY_W, e.KEY_A, e.KEY_S, e.KEY_D,
-        e.KEY_UP, e.KEY_DOWN, e.KEY_LEFT, e.KEY_RIGHT,
-        e.KEY_SPACE, e.KEY_ENTER, e.KEY_ESC,
-        e.BTN_LEFT, e.BTN_RIGHT,
-    ],
-    e.EV_REL: [e.REL_X, e.REL_Y, e.REL_WHEEL],
+# Map browser key codes to terminal byte sequences
+KEY_BYTES = {
+    "ArrowUp":    b'\x1b[A',
+    "ArrowDown":  b'\x1b[B',
+    "ArrowRight": b'\x1b[C',
+    "ArrowLeft":  b'\x1b[D',
+    "KeyW": b'w', "KeyA": b'a', "KeyS": b's', "KeyD": b'd',
+    "KeyH": b'h', "KeyJ": b'j', "KeyK": b'k', "KeyL": b'l',
+    "KeyP": b'p', "KeyQ": b'q',
+    "Space": b' ', "Enter": b'\n', "Escape": b'\x1b',
 }
 
-ui = UInput(UI_CAPS, name="webrtc-remote-input", bustype=e.BUS_USB)
+def find_snake_tty():
+    """Find the TTY device used by the snake bash process."""
+    try:
+        result = subprocess.run(['pgrep', '-f', 'snake.sh'], capture_output=True, text=True)
+        pids = [p.strip() for p in result.stdout.strip().split('\n') if p.strip()]
+        for pid in pids:
+            tty_link = f'/proc/{pid}/fd/0'
+            try:
+                tty = os.readlink(tty_link)
+                if tty.startswith('/dev/pts/'):
+                    return tty
+            except Exception:
+                continue
+    except Exception:
+        pass
+    return None
 
 def inject(evt: dict):
-    """evt: {"t":"key","code":"KeyW","down":true} or {"t":"mouse","dx":1,"dy":-2,"btn":...}"""
+    """Inject keystrokes into the snake TTY using TIOCSTI ioctl."""
     t = evt.get("t")
-    if t == "key":
-        code = evt.get("code")
-        down = 1 if evt.get("down") else 0
-        keymap = {
-            "KeyW": e.KEY_W, "KeyA": e.KEY_A, "KeyS": e.KEY_S, "KeyD": e.KEY_D,
-            "ArrowUp": e.KEY_UP, "ArrowDown": e.KEY_DOWN, "ArrowLeft": e.KEY_LEFT, "ArrowRight": e.KEY_RIGHT,
-            "Space": e.KEY_SPACE, "Enter": e.KEY_ENTER, "Escape": e.KEY_ESC,
-        }
-        if code in keymap:
-            ui.write(e.EV_KEY, keymap[code], down)
-            ui.syn()
-
-    elif t == "mouse":
-        dx = int(evt.get("dx", 0))
-        dy = int(evt.get("dy", 0))
-        if dx or dy:
-            ui.write(e.EV_REL, e.REL_X, dx)
-            ui.write(e.EV_REL, e.REL_Y, dy)
-            ui.syn()
-        btn = evt.get("btn")
-        if btn in ("left", "right"):
-            pressed = 1 if evt.get("down") else 0
-            ui.write(e.EV_KEY, e.BTN_LEFT if btn == "left" else e.BTN_RIGHT, pressed)
-            ui.syn()
+    if t != "key":
+        return
+    if not evt.get("down"):   # only on key-press, not release
+        return
+    code = evt.get("code", "")
+    data = KEY_BYTES.get(code)
+    if not data:
+        return
+    tty = find_snake_tty()
+    if not tty:
+        print("[STREAMER] inject: snake TTY not found")
+        return
+    try:
+        with open(tty, 'wb') as fd:
+            for byte in data:
+                fcntl.ioctl(fd, termios.TIOCSTI, bytes([byte]))
+    except Exception as ex:
+        print(f"[STREAMER] inject error ({tty}): {ex}")
 
 class WebRTCStreamer:
     def __init__(self):
@@ -103,21 +115,35 @@ class WebRTCStreamer:
         print("[STREAMER] Connecting WebRTC signals...")
         self.webrtc.connect("on-negotiation-needed", self.on_negotiation_needed)
         self.webrtc.connect("on-ice-candidate", self.on_ice_candidate)
-        self.webrtc.connect("on-data-channel", self.on_data_channel_created)
+        self.webrtc.connect("on-data-channel", self.on_data_channel)
         print("[STREAMER] Signals connected")
 
-    def on_data_channel_created(self, element, channel):
-        print("[STREAMER] Data channel created by peer")
+
+
+    def on_data_channel(self, webrtc, channel):
+        print(f"[STREAMER] ✅ Data channel received from browser: {channel.get_property('label')}")
         self.data_channel = channel
-        self.data_channel.connect("on-message-string", self.on_data_message)
-        print("[STREAMER] Data channel connected")
+        channel.connect("on-open", self.on_data_channel_open)
+        channel.connect("on-message-string", self.on_data_message)
+        channel.connect("on-close", self.on_data_channel_close)
+        channel.connect("on-error", self.on_data_channel_error)
+
+    def on_data_channel_open(self, channel):
+        print("[STREAMER] ✅ Data channel OPENED - ready to receive input!")
+
+    def on_data_channel_close(self, channel):
+        print("[STREAMER] Data channel closed")
+
+    def on_data_channel_error(self, channel, error):
+        print(f"[STREAMER] Data channel error: {error}")
 
     def on_data_message(self, channel, msg):
         try:
             evt = json.loads(msg)
+            print(f"[STREAMER] Input received: {evt}")
             inject(evt)
-        except Exception:
-            pass
+        except Exception as ex:
+            print(f"[STREAMER] Failed to parse input message: {ex}")
 
     def on_ice_candidate(self, element, mlineindex, candidate):
         asyncio.run_coroutine_threadsafe(
@@ -233,9 +259,19 @@ class WebRTCStreamer:
                 print(f"[STREAMER] Error: {err.message}")
                 print(f"[STREAMER] Debug: {debug}")
         else:
-            # Don't add transceiver here - the pipeline already has video linked
-            # Just wait for browser to connect
             print("[STREAMER] Pipeline ready, waiting for browser connection...")
+            # Create data channel AFTER pipeline is PLAYING so webrtcbin accepts it
+            print("[STREAMER] Creating data channel 'input'...")
+            channel = self.webrtc.emit("create-data-channel", "input", None)
+            if channel:
+                self.data_channel = channel
+                channel.connect("on-open", self.on_data_channel_open)
+                channel.connect("on-message-string", self.on_data_message)
+                channel.connect("on-close", self.on_data_channel_close)
+                channel.connect("on-error", self.on_data_channel_error)
+                print("[STREAMER] Data channel 'input' created and wired")
+            else:
+                print("[STREAMER] WARNING: create-data-channel returned None")
         
     def on_bus_message(self, bus, message):
         t = message.type
