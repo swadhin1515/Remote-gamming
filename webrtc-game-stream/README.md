@@ -16,6 +16,8 @@ A complete Docker-based solution for streaming games over WebRTC with bidirectio
 - ✅ Keyboard and mouse input injection via Linux uinput
 - ✅ Headless X11 server (Xvfb) for game rendering
 - ✅ Room-based signaling for multiple sessions
+- ✅ **Host Capture Mode**: Stream games running on your host machine
+- ✅ **Container Mode**: Run and stream games inside Docker
 
 ## Quick Start
 
@@ -23,8 +25,16 @@ A complete Docker-based solution for streaming games over WebRTC with bidirectio
 
 - Docker and Docker Compose
 - Linux host (for uinput support)
+- For host capture mode: X11 display server
 
-### Build and Run
+### Two Modes of Operation
+
+This system supports two capture modes:
+
+1. **Container Mode (Default)**: Games run inside Docker container
+2. **Host Mode**: Stream games already running on your host machine
+
+### Build and Run (Container Mode)
 
 ```bash
 # Navigate to project directory
@@ -36,6 +46,27 @@ docker compose up --build
 # Access the web client
 # Open http://localhost:8080 in your browser
 ```
+
+### Host Capture Mode (Stream Existing Games)
+
+To stream games running on your host machine (Python games, Minecraft, etc.):
+
+```bash
+# Allow X11 access
+xhost +local:docker
+
+# Start in host capture mode
+CAPTURE_MODE=host docker-compose up
+
+# Run your game on the host
+python3 my_game.py
+# or
+java -jar minecraft.jar
+
+# Open http://localhost:8080 to view the stream
+```
+
+📖 **See [HOST_CAPTURE_MODE.md](HOST_CAPTURE_MODE.md) for detailed instructions**
 
 ### Using Your Own Game
 

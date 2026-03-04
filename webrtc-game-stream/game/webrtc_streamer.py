@@ -18,6 +18,7 @@ GObject.threads_init()
 SIGNALING_URL = os.environ.get("SIGNALING_URL", "ws://localhost:9000")
 ROOM = os.environ.get("ROOM", "room1")
 DISPLAY_ENV = os.environ.get("DISPLAY", ":1")
+CAPTURE_MODE = os.environ.get("CAPTURE_MODE", "container")
 
 # Lazy-init Xlib display (opened once, reused across reconnects)
 _xdisplay = None
@@ -123,6 +124,9 @@ class WebRTCStreamer:
         self.data_channel = None
 
     def build_pipeline(self):
+        capture_info = f"host display {DISPLAY_ENV}" if CAPTURE_MODE == "host" else f"container display {DISPLAY_ENV}"
+        print(f"[STREAMER] Building pipeline for {capture_info}")
+        
         pipeline_str = f"""
         webrtcbin name=webrtc bundle-policy=max-bundle
         ximagesrc display-name={DISPLAY_ENV} use-damage=false !

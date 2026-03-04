@@ -10,14 +10,17 @@ services:
     environment:
       - SIGNALING_URL=ws://localhost:9000
       - ROOM=room1
-      - DISPLAY=:99
+      - DISPLAY=${DISPLAY:-:0}
       - GAME_CMD=xterm -maximized -e /app/game_launcher.sh
       - GAME_NAME=
+      - CAPTURE_MODE=${CAPTURE_MODE:-host}
     privileged: true
     devices:
       - /dev/uinput:/dev/uinput
     volumes:
       - ./games:/games:ro
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - ${XAUTHORITY:-$HOME/.Xauthority}:/root/.Xauthority:ro
 
   web:
     build: ./web
