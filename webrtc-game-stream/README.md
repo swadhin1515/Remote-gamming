@@ -39,7 +39,73 @@ docker compose up --build
 
 ### Using Your Own Game
 
-Edit `docker-compose.yml` and change the `GAME_CMD` environment variable:
+#### Method 1: Upload Games to the `games/` Folder (Recommended)
+
+Simply place your game executable or script in the `games/` folder:
+
+```bash
+# Copy your game to the games folder
+cp /path/to/your-game games/
+
+# Make it executable
+chmod +x games/your-game
+
+# Restart the game container
+docker-compose restart game
+```
+
+The game launcher will automatically detect and run the first game it finds in the `games/` folder. Supported formats:
+- Shell scripts (`.sh`)
+- Python scripts (`.py`)
+- Binary executables
+- Any executable file
+
+**Example with a shell script:**
+```bash
+# Create a simple game
+cat > games/my-game.sh << 'EOF'
+#!/bin/bash
+echo "My game is running!"
+xterm -e "echo 'Hello from my game'; bash"
+EOF
+
+# Make it executable
+chmod +x games/my-game.sh
+
+# Restart to run your game (runs first game found)
+docker-compose restart game
+```
+
+**Selecting a specific game when you have multiple:**
+
+Edit `docker-compose.yml` and set the `GAME_NAME` environment variable:
+
+```yaml
+game:
+  environment:
+    - GAME_NAME=my-game.sh  # Specify which game to run
+```
+
+Or run directly:
+```bash
+# Run a specific game
+GAME_NAME=my-game.sh docker-compose up game
+
+# Or restart with a specific game
+docker-compose stop game
+GAME_NAME=my-game.sh docker-compose up -d game
+```
+
+The launcher will:
+- Run the specified game if `GAME_NAME` is set
+- Run the first game found if `GAME_NAME` is not set
+- Fall back to the default snake game if no games are in the folder
+
+See `games/README.md` for detailed instructions and examples.
+
+#### Method 2: Edit docker-compose.yml
+
+Alternatively, edit `docker-compose.yml` and change the `GAME_CMD` environment variable:
 
 ```yaml
 environment:

@@ -11,10 +11,13 @@ services:
       - SIGNALING_URL=ws://localhost:9000
       - ROOM=room1
       - DISPLAY=:99
-      - GAME_CMD=xterm -maximized -e /app/snake.sh
+      - GAME_CMD=xterm -maximized -e /app/game_launcher.sh
+      - GAME_NAME=
     privileged: true
     devices:
       - /dev/uinput:/dev/uinput
+    volumes:
+      - ./games:/games:ro
 
   web:
     build: ./web
