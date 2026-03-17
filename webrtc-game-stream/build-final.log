@@ -1,0 +1,87 @@
+ Image webrtc-game-stream-signaling Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 554B done
+#1 DONE 0.0s
+
+#2 [internal] load build definition from Dockerfile
+#2 transferring dockerfile:
+#2 transferring dockerfile: 434B done
+#2 DONE 0.1s
+
+#3 [internal] load metadata for docker.io/library/node:20-alpine
+#3 DONE 0.4s
+
+#4 [internal] load .dockerignore
+#4 transferring context: 2B done
+#4 DONE 0.1s
+
+#5 [1/5] FROM docker.io/library/node:20-alpine@sha256:b88333c42c23fbd91596ebd7fd10de239cedab9617de04142dde7315e3bc0afa
+#5 resolve docker.io/library/node:20-alpine@sha256:b88333c42c23fbd91596ebd7fd10de239cedab9617de04142dde7315e3bc0afa 0.1s done
+#5 DONE 0.1s
+
+#6 [2/5] WORKDIR /app
+#6 CACHED
+
+#7 [internal] load build context
+#7 transferring context: 6.93kB done
+#7 DONE 0.2s
+
+#8 [3/5] COPY package*.json ./
+#8 DONE 0.2s
+
+#9 [3/5] COPY package*.json ./
+#9 CACHED
+
+#10 [4/5] RUN npm config set registry https://registry.npmjs.org/ &&     npm install --production ||     npm install --production ||     npm install --production
+#10 7.694 npm warn config production Use `--omit=dev` instead.
+#10 93.69 npm error code EAI_AGAIN
+#10 93.69 npm error syscall getaddrinfo
+#10 93.69 npm error errno EAI_AGAIN
+#10 93.69 npm error request to https://registry.npmjs.org/ws failed, reason: getaddrinfo EAI_AGAIN registry.npmjs.org
+#10 93.69 npm error A complete log of this run can be found in: /root/.npm/_logs/2026-03-07T16_27_09_925Z-debug-0.log
+#10 94.04 npm warn config production Use `--omit=dev` instead.
+#10 180.0 npm error code EAI_AGAIN
+#10 180.0 npm error syscall getaddrinfo
+#10 180.0 npm error errno EAI_AGAIN
+#10 180.0 npm error request to https://registry.npmjs.org/ws failed, reason: getaddrinfo EAI_AGAIN registry.npmjs.org
+#10 180.0 npm error A complete log of this run can be found in: /root/.npm/_logs/2026-03-07T16_28_36_261Z-debug-0.log
+#10 180.8 npm warn config production Use `--omit=dev` instead.
+#10 267.0 npm error code EAI_AGAIN
+#10 267.0 npm error syscall getaddrinfo
+#10 267.0 npm error errno EAI_AGAIN
+#10 267.0 npm error request to https://registry.npmjs.org/ws failed, reason: getaddrinfo EAI_AGAIN registry.npmjs.org
+#10 267.1 npm error A complete log of this run can be found in: /root/.npm/_logs/2026-03-07T16_30_02_907Z-debug-0.log
+#10 ERROR: process "/bin/sh -c npm config set registry https://registry.npmjs.org/ &&     npm install --production ||     npm install --production ||     npm install --production" did not complete successfully: exit code: 1
+------
+ > [4/5] RUN npm config set registry https://registry.npmjs.org/ &&     npm install --production ||     npm install --production ||     npm install --production:
+180.0 npm error syscall getaddrinfo
+180.0 npm error errno EAI_AGAIN
+180.0 npm error request to https://registry.npmjs.org/ws failed, reason: getaddrinfo EAI_AGAIN registry.npmjs.org
+180.0 npm error A complete log of this run can be found in: /root/.npm/_logs/2026-03-07T16_28_36_261Z-debug-0.log
+180.8 npm warn config production Use `--omit=dev` instead.
+267.0 npm error code EAI_AGAIN
+267.0 npm error syscall getaddrinfo
+267.0 npm error errno EAI_AGAIN
+267.0 npm error request to https://registry.npmjs.org/ws failed, reason: getaddrinfo EAI_AGAIN registry.npmjs.org
+267.1 npm error A complete log of this run can be found in: /root/.npm/_logs/2026-03-07T16_30_02_907Z-debug-0.log
+------
+Dockerfile:9
+
+--------------------
+
+   8 |     # Install dependencies with better network handling
+
+   9 | >>> RUN npm config set registry https://registry.npmjs.org/ && \
+
+  10 | >>>     npm install --production || \
+
+  11 | >>>     npm install --production || \
+
+  12 | >>>     npm install --production
+
+  13 |     
+
+--------------------
+
+failed to solve: process "/bin/sh -c npm config set registry https://registry.npmjs.org/ &&     npm install --production ||     npm install --production ||     npm install --production" did not complete successfully: exit code: 1
+

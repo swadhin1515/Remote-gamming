@@ -1,0 +1,18 @@
+# Docker Compose for SIGNALING SERVER MACHINE
+# This runs only the WebSocket signaling server
+# 
+# Usage:
+#   docker compose -f docker-compose.signaling.yml up
+#
+# The signaling server will listen on port 9000
+# Make sure this port is accessible from both game and web client machines
+
+services:
+  signaling:
+    build:
+      context: ./signaling
+      network: host
+    network_mode: "host"
+    restart: unless-stopped
+    ports:
+      - "9000:9000"

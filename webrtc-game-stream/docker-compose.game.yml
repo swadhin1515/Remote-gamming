@@ -1,0 +1,30 @@
+# Docker Compose for GAME MACHINE
+# This runs only the game streaming service
+# 
+# Usage:
+#   1. Set SIGNALING_SERVER environment variable to your signaling server IP/hostname
+#   2. Run: docker compose -f docker-compose.game.yml up
+#
+# Example:
+#   export SIGNALING_SERVER=192.168.1.100
+#   docker compose -f docker-compose.game.yml up
+
+services:
+  game:
+    build:
+      context: ./game
+      network: host
+    network_mode: "host"
+    environment:
+      # REQUIRED: Set this to your signaling server's address
+      - SIGNALING_URL=ws://${SIGNALING_SERVER:-localhost}:9000
+      - ROOM=${ROOM:-room1}
+      - DISPLAY=:99
+      - GAME_CMD=${GAME_CMD:-xterm -maximized -e /app/game_launcher.sh}
+      - GAME_NAME=${GAME_NAME:-}
+    privileged: true
+    devices:
+      - /dev/uinput:/dev/uinput
+    volumes:
+      - ./games:/games:ro
+    restart: unless-stopped

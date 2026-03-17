@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Select Game Room - WebRTC Game Streaming</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 1200px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .custom-room {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .custom-room h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        input {
+            padding: 12px 20px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            min-width: 250px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-weight: 600;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .room-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .room-card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .room-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transform: scaleX(0);
+            transition: transform 0.3s;
+        }
+
+        .room-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            border-color: #667eea;
+        }
+
+        .room-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .room-card h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .room-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .available {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .occupied {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .user-count {
+            color: #666;
+            font-size: 14px;
+            margin-top: 8px;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .room-list {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+
+            .input-group {
+                flex-direction: column;
+            }
+
+            input {
+                width: 100%;
+            }
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 Game Room Selection</h1>
+        <p class="subtitle">Choose a room to join or create your own custom room</p>
+        
+        <div class="custom-room">
+            <h3>Create or Join Custom Room</h3>
+            <div class="input-group">
+                <input type="text" id="customRoom" placeholder="Enter room name (e.g., my-game-room)">
+                <button onclick="joinCustomRoom()">Join Room</button>
+            </div>
+        </div>
+
+        <div id="loading" class="loading" style="display: none;">
+            <div class="spinner"></div>
+            <p>Loading available rooms...</p>
+        </div>
+
+        <div class="room-list" id="roomList">
+            <!-- Rooms will be populated here -->
+        </div>
+
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-value" id="totalRooms">0</div>
+                <div class="stat-label">Available Rooms</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="activeRooms">0</div>
+                <div class="stat-label">Active Games</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="totalUsers">0</div>
+                <div class="stat-label">Online Users</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const roomList = document.getElementById('roomList');
+        const numRooms = 10; // Number of default rooms
+        let ws = null;
+        let roomStatus = new Map();
+
+        // Generate default room cards
+        function generateRoomCards() {
+            roomList.innerHTML = '';
+            
+            for (let i = 1; i <= numRooms; i++) {
+                const roomName = `room${i}`;
+                const status = roomStatus.get(roomName) || { hasGame: false, webClients: 0 };
+                
+                const roomCard = document.createElement('div');
+                roomCard.className = 'room-card';
+                roomCard.innerHTML = `
+                    <div class="room-icon">🎯</div>
+                    <h3>Room ${i}</h3>
+                    <span class="status ${status.hasGame ? 'occupied' : 'available'}">
+                        ${status.hasGame ? 'Active' : 'Available'}
+                    </span>
+                    ${status.webClients > 0 ? `<div class="user-count">👥 ${status.webClients} viewer${status.webClients > 1 ? 's' : ''}</div>` : ''}
+                `;
+                roomCard.onclick = () => joinRoom(roomName);
+                roomList.appendChild(roomCard);
+            }
+
+            updateStats();
+        }
+
+        function updateStats() {
+            const totalRooms = numRooms;
+            let activeRooms = 0;
+            let totalUsers = 0;
+
+            roomStatus.forEach(status => {
+                if (status.hasGame) activeRooms++;
+                totalUsers += status.webClients;
+            });
+
+            document.getElementById('totalRooms').textContent = totalRooms;
+            document.getElementById('activeRooms').textContent = activeRooms;
+            document.getElementById('totalUsers').textContent = totalUsers;
+        }
+
+        function joinRoom(roomName) {
+            // Redirect to game client with room parameter
+            window.location.href = `/index.html?room=${roomName}`;
+        }
+
+        function joinCustomRoom() {
+            const roomName = document.getElementById('customRoom').value.trim();
+            if (roomName) {
+                // Validate room name (alphanumeric and hyphens only)
+                if (/^[a-zA-Z0-9-_]+$/.test(roomName)) {
+                    joinRoom(roomName);
+                } else {
+                    alert('Room name can only contain letters, numbers, hyphens, and underscores');
+                }
+            } else {
+                alert('Please enter a room name');
+            }
+        }
+
+        // Allow Enter key to join custom room
+        document.getElementById('customRoom').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                joinCustomRoom();
+            }
+        });
+
+        // Connect to signaling server to get real-time room status
+        function connectToSignaling() {
+            try {
+                ws = new WebSocket('ws://localhost:9000');
+                
+                ws.onopen = () => {
+                    console.log('Connected to signaling server');
+                };
+
+                ws.onmessage = (event) => {
+                    try {
+                        const msg = JSON.parse(event.data);
+                        if (msg.type === 'room-status') {
+                            // Update room status
+                            roomStatus.clear();
+                            msg.data.forEach(room => {
+                                roomStatus.set(room.room, {
+                                    hasGame: room.hasGame,
+                                    webClients: room.webClients
+                                });
+                            });
+                            generateRoomCards();
+                        }
+                    } catch (err) {
+                        console.error('Error parsing message:', err);
+                    }
+                };
+
+                ws.onerror = (error) => {
+                    console.error('WebSocket error:', error);
+                };
+
+                ws.onclose = () => {
+                    console.log('Disconnected from signaling server');
+                    // Reconnect after 5 seconds
+                    setTimeout(connectToSignaling, 5000);
+                };
+            } catch (err) {
+                console.error('Error connecting to signaling server:', err);
+                // Try again after 5 seconds
+                setTimeout(connectToSignaling, 5000);
+            }
+        }
+
+        // Initialize
+        generateRoomCards();
+        connectToSignaling();
+    </script>
+</body>
+</html>

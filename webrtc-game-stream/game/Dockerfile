@@ -20,11 +20,11 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-COPY requirements.txt .
-RUN pip3 install --no-cache-dir -r requirements.txt
+COPY *.whl ./
+RUN pip3 install --no-cache-dir *.whl
 
-COPY webrtc_streamer.py start.sh snake.sh ./
-RUN chmod +x /app/start.sh /app/snake.sh
+COPY webrtc_streamer.py start.sh snake.sh game_launcher.sh ./
+RUN chmod +x /app/start.sh /app/snake.sh /app/game_launcher.sh
 
 # Helps terminal tools like tput inside non-interactive contexts
 ENV TERM=xterm-256color

@@ -1,0 +1,108 @@
+ Image webrtc-game-stream-signaling Building 
+#1 [internal] load local bake definitions
+#1 reading from stdin 578B done
+#1 DONE 0.0s
+
+#2 [internal] load build definition from Dockerfile
+#2 transferring dockerfile:
+#2 transferring dockerfile: 679B done
+#2 DONE 0.2s
+
+#3 [internal] load metadata for docker.io/library/node:20-alpine
+#3 DONE 0.6s
+
+#4 [internal] load .dockerignore
+#4 transferring context: 2B done
+#4 DONE 0.2s
+
+#5 [1/5] FROM docker.io/library/node:20-alpine@sha256:b88333c42c23fbd91596ebd7fd10de239cedab9617de04142dde7315e3bc0afa
+#5 resolve docker.io/library/node:20-alpine@sha256:b88333c42c23fbd91596ebd7fd10de239cedab9617de04142dde7315e3bc0afa 0.1s done
+#5 DONE 0.1s
+
+#6 [2/5] WORKDIR /app
+#6 CACHED
+
+#7 [internal] load build context
+#7 transferring context: 6.93kB 0.0s done
+#7 DONE 0.2s
+
+#8 [3/5] COPY package*.json ./
+#8 DONE 0.2s
+
+#9 [4/5] RUN echo "nameserver 8.8.8.8" > /etc/resolv.conf &&     echo "nameserver 8.8.4.4" >> /etc/resolv.conf &&     npm config set registry https://registry.npmjs.org/ &&     npm config set fetch-retries 10 &&     npm config set fetch-retry-mintimeout 20000 &&     npm config set fetch-retry-maxtimeout 120000 &&     npm install --production --verbose ||     (sleep 5 && npm install --production --verbose)
+#9 1.062 /bin/sh: can't create /etc/resolv.conf: Read-only file system
+#9 6.422 npm verbose cli /usr/local/bin/node /usr/local/bin/npm
+#9 6.422 npm info using npm@10.8.2
+#9 6.422 npm info using node@v20.20.1
+#9 6.422 npm warn config production Use `--omit=dev` instead.
+#9 6.447 npm verbose title npm install
+#9 6.447 npm verbose argv "install" "--production" "--loglevel" "verbose"
+#9 6.447 npm verbose logfile logs-max:10 dir:/root/.npm/_logs/2026-03-07T16_25_42_721Z-
+#9 6.447 npm verbose logfile /root/.npm/_logs/2026-03-07T16_25_42_721Z-debug-0.log
+#9 12.29 npm http fetch GET https://registry.npmjs.org/npm attempt 1 failed with EAI_AGAIN
+#9 12.35 npm http fetch GET https://registry.npmjs.org/ws attempt 1 failed with EAI_AGAIN
+#9 27.34 npm http fetch GET https://registry.npmjs.org/npm attempt 2 failed with EAI_AGAIN
+#9 27.37 npm http fetch GET https://registry.npmjs.org/ws attempt 2 failed with EAI_AGAIN
+#9 92.48 npm http fetch GET https://registry.npmjs.org/npm attempt 3 failed with EAI_AGAIN
+#9 92.49 npm http fetch GET https://registry.npmjs.org/ws attempt 3 failed with EAI_AGAIN
+#9 92.53 npm verbose type system
+#9 92.53 npm verbose stack FetchError: request to https://registry.npmjs.org/ws failed, reason: getaddrinfo EAI_AGAIN registry.npmjs.org
+#9 92.53 npm verbose stack     at ClientRequest.<anonymous> (/usr/local/lib/node_modules/npm/node_modules/minipass-fetch/lib/index.js:130:14)
+#9 92.53 npm verbose stack     at ClientRequest.emit (node:events:524:28)
+#9 92.53 npm verbose stack     at emitErrorEvent (node:_http_client:101:11)
+#9 92.53 npm verbose stack     at _destroy (node:_http_client:884:9)
+#9 92.53 npm verbose stack     at onSocketNT (node:_http_client:904:5)
+#9 92.53 npm verbose stack     at process.processTicksAndRejections (node:internal/process/task_queues:83:21)
+#9 92.53 npm error code EAI_AGAIN
+#9 92.53 npm error syscall getaddrinfo
+#9 92.53 npm error errno EAI_AGAIN
+#9 92.53 npm error request to https://registry.npmjs.org/ws failed, reason: getaddrinfo EAI_AGAIN registry.npmjs.org
+#9 92.53 npm verbose cwd /app
+#9 92.53 npm verbose os Linux 4.18.0-553.104.1.el8_10.x86_64
+#9 92.53 npm verbose node v20.20.1
+#9 92.53 npm verbose npm  v10.8.2
+#9 92.53 npm verbose exit 1
+#9 92.53 npm verbose code 1
+#9 92.53 npm error A complete log of this run can be found in: /root/.npm/_logs/2026-03-07T16_25_42_721Z-debug-0.log
+#9 ERROR: process "/bin/sh -c echo \"nameserver 8.8.8.8\" > /etc/resolv.conf &&     echo \"nameserver 8.8.4.4\" >> /etc/resolv.conf &&     npm config set registry https://registry.npmjs.org/ &&     npm config set fetch-retries 10 &&     npm config set fetch-retry-mintimeout 20000 &&     npm config set fetch-retry-maxtimeout 120000 &&     npm install --production --verbose ||     (sleep 5 && npm install --production --verbose)" did not complete successfully: exit code: 1
+------
+ > [4/5] RUN echo "nameserver 8.8.8.8" > /etc/resolv.conf &&     echo "nameserver 8.8.4.4" >> /etc/resolv.conf &&     npm config set registry https://registry.npmjs.org/ &&     npm config set fetch-retries 10 &&     npm config set fetch-retry-mintimeout 20000 &&     npm config set fetch-retry-maxtimeout 120000 &&     npm install --production --verbose ||     (sleep 5 && npm install --production --verbose):
+92.53 npm error syscall getaddrinfo
+92.53 npm error errno EAI_AGAIN
+92.53 npm error request to https://registry.npmjs.org/ws failed, reason: getaddrinfo EAI_AGAIN registry.npmjs.org
+92.53 npm verbose cwd /app
+92.53 npm verbose os Linux 4.18.0-553.104.1.el8_10.x86_64
+92.53 npm verbose node v20.20.1
+92.53 npm verbose npm  v10.8.2
+92.53 npm verbose exit 1
+92.53 npm verbose code 1
+92.53 npm error A complete log of this run can be found in: /root/.npm/_logs/2026-03-07T16_25_42_721Z-debug-0.log
+------
+Dockerfile:9
+
+--------------------
+
+   8 |     # Use Google's public DNS and install with better error handling
+
+   9 | >>> RUN echo "nameserver 8.8.8.8" > /etc/resolv.conf && \
+
+  10 | >>>     echo "nameserver 8.8.4.4" >> /etc/resolv.conf && \
+
+  11 | >>>     npm config set registry https://registry.npmjs.org/ && \
+
+  12 | >>>     npm config set fetch-retries 10 && \
+
+  13 | >>>     npm config set fetch-retry-mintimeout 20000 && \
+
+  14 | >>>     npm config set fetch-retry-maxtimeout 120000 && \
+
+  15 | >>>     npm install --production --verbose || \
+
+  16 | >>>     (sleep 5 && npm install --production --verbose)
+
+  17 |     
+
+--------------------
+
+failed to solve: process "/bin/sh -c echo \"nameserver 8.8.8.8\" > /etc/resolv.conf &&     echo \"nameserver 8.8.4.4\" >> /etc/resolv.conf &&     npm config set registry https://registry.npmjs.org/ &&     npm config set fetch-retries 10 &&     npm config set fetch-retry-mintimeout 20000 &&     npm config set fetch-retry-maxtimeout 120000 &&     npm install --production --verbose ||     (sleep 5 && npm install --production --verbose)" did not complete successfully: exit code: 1
+

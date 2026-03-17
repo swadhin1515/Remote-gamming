@@ -1,0 +1,21 @@
+Generic infra to handel anyking of game SDL, pygame, etc.
+
+  Current setup:
+   - GAME_CMD env var launches the game (currently xterm -maximized -e /app/snake.sh)
+   - Video: GStreamer captures the X display via ximagesrc → VP8 → WebRTC → browser ✅
+   - Input: TIOCSTI injection into snake's PTY (bash process stdin) ❌ - this is snake-specific
+
+  The problem with the current input approach:
+   - TIOCSTI writes to the snake bash process's PTY stdin
+   - This only works for terminal/text games that read from stdin
+   - For graphical games (SDL, pygame, etc.), input goes through X11 events, not stdin
+
+  For a generic game support:
+   1. Video streaming: Already works generically - ximagesrc captures the entire X display, so any game running on that display will be captured ✅
+   2. Input control: Need to use X11 input injection (xdotool or XTEST extension) instead of TIOCSTI
+
+  The right approach for generic game input:
+   - Use python-xlib or Xlib to inject X11 key events via the XTEST extension
+   - This works for ALL X11 applications (terminal games, SDL games, pygame, etc.)
+   - xdotool does this but requires installation (network was down)
+   - python-xlib can be installed via pip (already have pip)

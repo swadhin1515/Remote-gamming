@@ -1,0 +1,85 @@
+version: '3.8'
+
+services:
+  signaling:
+    build: ./signaling
+    container_name: signaling-server
+    ports:
+      - "9000:9000"
+    networks:
+      - game-network
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  game:
+    build: ./game
+    depends_on:
+      - signaling
+    environment:
+      - SIGNALING_URL=ws://signaling-server:9000
+      - ROOM=${ROOM:-room-${HOSTNAME}}
+      - DISPLAY=:99
+      - GAME_CMD=xterm -maximized -e /app/game_launcher.sh
+      - GAME_NAME=${GAME_NAME:-snake.sh}
+      - CAPTURE_MODE=${CAPTURE_MODE:-container}
+    privileged: true
+    devices:
+      - /dev/uinput:/dev/uinput
+    volumes:
+      - ./games:/games:ro
+    networks:
+      - game-network
+    restart: unless-stopped
+    # Resource limits per container
+    deploy:
+      replicas: 3  # Default number of game instances
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          cpus: '1.0'
+          memory: 2G
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  web:
+    build: ./web
+    container_name: web-server
+    depends_on:
+      - signaling
+    ports:
+      - "8080:80"
+    networks:
+      - game-network
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  game-network:
+    driver: bridge
+
+# Usage:
+# 
+# Start with default 3 game instances:
+#   docker-compose -f docker-compose.multi-user.yml up
+#
+# Scale to 5 game instances:
+#   docker-compose -f docker-compose.multi-user.yml up --scale game=5
+#
+# Scale to 10 game instances:
+#   docker-compose -f docker-compose.multi-user.yml up --scale game=10
+#
+# Start specific room:
+#   ROOM=room1 docker-compose -f docker-compose.multi-user.yml up game

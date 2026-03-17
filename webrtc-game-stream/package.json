@@ -1,0 +1,16 @@
+{
+  "name": "webrtc-game-stream",
+  "version": "1.0.0",
+  "description": "A complete Docker-based solution for streaming games over WebRTC with bidirectional input control.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "ws": "^8.19.0"
+  }
+}

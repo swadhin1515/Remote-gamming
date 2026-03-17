@@ -1,0 +1,68 @@
+✅ What’s happening
+Your TURN server is binding to these IPs:
+172.18.0.1
+172.17.0.1
+9.30.249.236
+10.11.82.147
+127.0.0.1
+
+But your external user (browser) is connecting from IP:
+9.43.126.76  (external network)
+
+And the public hostname is:
+dockerstream1.fyre.ibm.com
+
+Here’s the problem:
+🔥 The browser is trying to reach TURN at:
+turn:dockerstream1.fyre.ibm.com:3478
+
+But TURN is not listening on the public IP of the host — only on internal Docker interfaces.
+So from the browser’s point of view:
+dockerstream1.fyre.ibm.com:3478 → NO RESPONSE
+
+➡ WebRTC cannot get relay candidates
+➡ ICE fails
+➡ Browser shows “ICE failed – add a TURN server”
+
+❗ Why TURN is failing
+TURN must:
+
+Listen on a public IP
+Publish that public IP to WebRTC
+Relay traffic between the external browser and the Docker game container
+
+Right now your TURN server is not bound to the public interface, so only internal containers can reach it, not outside clients.
+
+⭐ Why Docker makes this tricky
+Docker networks use NAT → private IP ranges (172.x.x.x).
+Your TURN server is binding to those, so the external browser cannot reach it.
+TURN must bind to:
+
+the host's public network interface
+NOT Docker bridges
+NOT localhost
+NOT internal VLANs
+
+Otherwise ICE will always fail.
+
+
+🎯 SIMPLE RULE TO REMEMBER
+✔ If your browser is outside the server’s network
+👉 TURN must be reachable on a public IP
+👉 TURN must advertise that same public IP
+👉 TURN must listen on all required ports, not only Docker ones
+
+
+Quick answers to likely questions
+
+
+Why was I seeing only 443?
+Because coturn was configured (or defaulted in your environment) to bind to 443. Your earlier connectivity tests were against 3478, which had nothing listening.
+
+
+Is 443 okay for TURN?
+Yes. It’s actually a good practice for NAT/firewall traversal. Many production setups use TURN on 443 specifically to punch through restrictive egress rules.
+
+
+Do I need to expose Docker ports?
+No. TURN runs on the host, not in your containers. Your game container streams via WebRTC; the browser retrieves media through TURN, not directly to the container.

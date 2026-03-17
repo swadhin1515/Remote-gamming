@@ -1,0 +1,25 @@
+# Docker Compose for WEB CLIENT MACHINE
+# This runs only the nginx web server serving the client interface
+# 
+# Usage:
+#   1. Set SIGNALING_SERVER environment variable to your signaling server IP/hostname
+#   2. Run: docker compose -f docker-compose.web.yml up
+#
+# Example:
+#   export SIGNALING_SERVER=192.168.1.100
+#   docker compose -f docker-compose.web.yml up
+#
+# The web interface will be available at http://localhost:8080
+
+services:
+  web:
+    build:
+      context: ./web
+      args:
+        SIGNALING_SERVER: ${SIGNALING_SERVER:-localhost}
+    network_mode: "host"
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    environment:
+      - SIGNALING_SERVER=${SIGNALING_SERVER:-localhost}
