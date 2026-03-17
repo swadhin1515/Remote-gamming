@@ -22,6 +22,7 @@
 {"id":"6ecafc46-8485-4487-b026-5e086f3299bf","ts":"2026-02-27T18:25:33.268Z","path":"/root/webrtc-game-stream/web/client.js","version":"1.0.0","taskID":"09cab7c1-91b8-4bf8-b7d1-7614dd5c8c89"}
 {"id":"7f673ada-acd1-438e-bed1-d7c1189b565d","ts":"2026-02-27T18:26:28.054Z","path":"/root/webrtc-game-stream/web/client.js","version":"1.0.0","taskID":"09cab7c1-91b8-4bf8-b7d1-7614dd5c8c89"}
 {"id":"4600f941-d108-4958-845d-fbade4ee8599","ts":"2026-02-27T18:46:36.057Z","path":"/root/webrtc-game-stream/web/index.html","version":"1.0.0","taskID":"0fc79cb9-1cc6-4af8-9ca8-65ca4434819e"}
+<<<<<<< HEAD
 {"id":"2fcfb07d-dc42-4ac4-ad25-f306502b34fe","ts":"2026-03-04T20:12:28.381Z","path":"/root/webrtc-game-stream/docker-compose.yml","version":"1.0.0","taskID":"652e4936-e662-4a45-b644-031b2a24ac74"}
 {"id":"6b6d910b-979c-4968-a1a4-0352058d0a22","ts":"2026-03-04T20:12:51.702Z","path":"/root/webrtc-game-stream/game/game_launcher.sh","version":"1.0.0","taskID":"652e4936-e662-4a45-b644-031b2a24ac74"}
 {"id":"313587f5-4301-488c-91f1-3316e15b82a8","ts":"2026-03-04T20:13:04.435Z","path":"/root/webrtc-game-stream/game/Dockerfile","version":"1.0.0","taskID":"652e4936-e662-4a45-b644-031b2a24ac74"}
@@ -72,3 +73,5 @@
 {"id":"c4c65a58-5541-4d53-99f1-134bb55f643a","ts":"2026-03-07T17:33:05.700Z","path":"/root/webrtc-game-stream/web/client.js","version":"1.0.0","taskID":"d734f372-356e-4989-9118-c4929aafbf85"}
 {"id":"b72306fc-5943-4582-96d8-d842d2706c62","ts":"2026-03-07T17:33:45.305Z","path":"/root/webrtc-game-stream/MULTI_MACHINE_DEPLOYMENT.md","version":"1.0.0","taskID":"d734f372-356e-4989-9118-c4929aafbf85"}
 {"id":"e7dad4d8-3d98-4942-b40e-9078065a3d30","ts":"2026-03-07T17:34:02.652Z","path":"/root/webrtc-game-stream/QUICK_START_DISTRIBUTED.md","version":"1.0.0","taskID":"d734f372-356e-4989-9118-c4929aafbf85"}
+=======
+>>>>>>> ad3d39c6944ab8d767354f549e59b830a883be7f

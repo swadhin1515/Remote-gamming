@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>WebRTC Game Stream</title>
+  <title>WebRTC Game Stream - Multi-User</title>
   <style>
     body {
       margin: 0;
@@ -19,7 +19,46 @@
       text-align: center;
       color: #4CAF50;
     }
-    #v {
+    .room-selector {
+      background: #2a2a2a;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+      text-align: center;
+    }
+    .room-selector h2 {
+      color: #4CAF50;
+      margin-top: 0;
+    }
+    .room-buttons {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin: 20px 0;
+    }
+    .room-button {
+      background: #4CAF50;
+      color: white;
+      border: none;
+      padding: 20px;
+      font-size: 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .room-button:hover {
+      background: #45a049;
+    }
+    .room-button:active {
+      background: #3d8b40;
+    }
+    #game-container {
+      display: none;
+    }
+    #game-container.active {
+      display: block;
+    }
+    #video {
       width: 100%;
       max-width: 1280px;
       background: #000;
@@ -56,35 +95,111 @@
       padding: 8px;
       border-radius: 4px;
     }
+    .back-button {
+      background: #666;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin: 10px 0;
+    }
+    .back-button:hover {
+      background: #777;
+    }
   </style>
 </head>
 <body>
   <div id="container">
-    <h1>🎮 WebRTC Game Stream</h1>
-    <div id="status">Connecting...</div>
-    <video id="video" autoplay playsinline muted></video>
+    <h1>🎮 WebRTC Game Stream - Multi-User</h1>
     
-    <div class="info">
-      <h3>Controls</h3>
-      <div class="controls">
-        <div class="control-item"><strong>WASD:</strong> Movement</div>
-        <div class="control-item"><strong>Arrow Keys:</strong> Alternative movement</div>
-        <div class="control-item"><strong>Space:</strong> Jump/Action</div>
-        <div class="control-item"><strong>Enter:</strong> Confirm</div>
-        <div class="control-item"><strong>Escape:</strong> Menu</div>
-        <div class="control-item"><strong>Mouse:</strong> Look/Aim</div>
+    <div id="room-selector" class="room-selector">
+      <h2>Select a Game Instance</h2>
+      <p>Choose which game server you want to connect to:</p>
+      <div class="room-buttons">
+        <button class="room-button" onclick="joinRoom('room-dockerstream1.fyre.ibm.com-1')">
+          🎮 Game Server 1
+        </button>
+        <button class="room-button" onclick="joinRoom('room-dockerstream1.fyre.ibm.com-2')">
+          🎮 Game Server 2
+        </button>
+        <button class="room-button" onclick="joinRoom('room-dockerstream1.fyre.ibm.com-3')">
+          🎮 Game Server 3
+        </button>
+      </div>
+      <div class="info">
+        <h3>ℹ️ Multi-User Setup</h3>
+        <p>Each game server can handle one player at a time. If one is busy, try another!</p>
       </div>
     </div>
 
-    <div class="info">
-      <h3>Instructions</h3>
-      <ul>
-        <li>Click on the video to focus and enable input</li>
-        <li>Your keyboard and mouse inputs will be sent to the game</li>
-        <li>Low latency streaming via WebRTC</li>
-      </ul>
+    <div id="game-container">
+      <button class="back-button" onclick="backToRoomSelector()">← Back to Room Selection</button>
+      <div id="status">Connecting...</div>
+      <video id="video" autoplay playsinline muted></video>
+      
+      <div class="info">
+        <h3>Controls</h3>
+        <div class="controls">
+          <div class="control-item"><strong>WASD:</strong> Movement</div>
+          <div class="control-item"><strong>Arrow Keys:</strong> Alternative movement</div>
+          <div class="control-item"><strong>Space:</strong> Jump/Action</div>
+          <div class="control-item"><strong>Enter:</strong> Confirm</div>
+          <div class="control-item"><strong>Escape:</strong> Menu</div>
+          <div class="control-item"><strong>Mouse:</strong> Look/Aim</div>
+        </div>
+      </div>
+
+      <div class="info">
+        <h3>Instructions</h3>
+        <ul>
+          <li>Click on the video to focus and enable input</li>
+          <li>Your keyboard and mouse inputs will be sent to the game</li>
+          <li>Low latency streaming via WebRTC</li>
+        </ul>
+      </div>
     </div>
   </div>
-  <script src="client.js"></script>
+  
+  <script>
+    function joinRoom(roomName) {
+      // Store room in URL parameter
+      const url = new URL(window.location);
+      url.searchParams.set('room', roomName);
+      window.history.pushState({}, '', url);
+      
+      // Show game container
+      document.getElementById('room-selector').style.display = 'none';
+      document.getElementById('game-container').classList.add('active');
+      
+      // Load the client script
+      if (!window.clientLoaded) {
+        const script = document.createElement('script');
+        script.src = 'client.js';
+        document.body.appendChild(script);
+        window.clientLoaded = true;
+      } else {
+        // Reload page to reconnect with new room
+        window.location.reload();
+      }
+    }
+    
+    function backToRoomSelector() {
+      window.location.href = window.location.pathname;
+    }
+    
+    // Check if room is already in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const room = urlParams.get('room');
+    if (room) {
+      document.getElementById('room-selector').style.display = 'none';
+      document.getElementById('game-container').classList.add('active');
+      const script = document.createElement('script');
+      script.src = 'client.js';
+      document.body.appendChild(script);
+      window.clientLoaded = true;
+    }
+  </script>
 </body>
 </html>
