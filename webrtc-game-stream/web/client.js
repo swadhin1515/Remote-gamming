@@ -1,9 +1,9 @@
 const video = document.getElementById("video");
 const status = document.getElementById("status");
 
-// Get room from URL parameter, default to "room1"
+// Get room from URL parameter, default to hostname-based room
 const urlParams = new URLSearchParams(window.location.search);
-const room = urlParams.get('room') || 'room1';
+const room = urlParams.get('room') || `room-${window.location.hostname}`;
 
 // Get signaling server from URL parameter or environment variable injected by nginx
 const signalingServer = urlParams.get('signaling') || window.SIGNALING_SERVER || window.location.hostname;
