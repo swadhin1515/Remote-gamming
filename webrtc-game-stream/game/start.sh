@@ -5,12 +5,6 @@ pkill -9 Xvfb || true
 rm -f /tmp/.X1-lock /tmp/.X11-unix/X1 || true
 
 export DISPLAY=:1
-<<<<<<< HEAD
-=======
-
-Xvfb :1 -screen 0 1280x720x24 +extension RANDR &
-sleep 2
->>>>>>> ad3d39c6944ab8d767354f549e59b830a883be7f
 
 Xvfb :1 -screen 0 1280x720x24 +extension RANDR &
 sleep 2

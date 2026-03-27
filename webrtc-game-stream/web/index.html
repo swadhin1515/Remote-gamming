@@ -190,9 +190,9 @@
     }
     
     // Check if room is already in URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const room = urlParams.get('room');
-    if (room) {
+    const initialUrlParams = new URLSearchParams(window.location.search);
+    const initialRoom = initialUrlParams.get('room');
+    if (initialRoom) {
       document.getElementById('room-selector').style.display = 'none';
       document.getElementById('game-container').classList.add('active');
       const script = document.createElement('script');

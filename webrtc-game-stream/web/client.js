@@ -83,11 +83,7 @@ function setupPeerConnection() {
 
 // ─── WebSocket / signaling ────────────────────────────────────────────────────
 function connectWebSocket() {
-<<<<<<< HEAD
   const wsUrl = `ws://${signalingServer}:9000`;
-=======
-  const wsUrl = `ws://${window.location.hostname}:9000`;
->>>>>>> ad3d39c6944ab8d767354f549e59b830a883be7f
   setStatus(`Connecting to ${wsUrl}...`);
 
   connectionTimeout = setTimeout(() => {
@@ -264,8 +260,4 @@ function installInputHandlers() {
 }
 
 // ─── Boot ─────────────────────────────────────────────────────────────────────
-<<<<<<< HEAD
 connectWebSocket();
-=======
-connectWebSocket();
->>>>>>> ad3d39c6944ab8d767354f549e59b830a883be7f
