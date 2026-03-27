@@ -19,6 +19,11 @@ SIGNALING_URL = os.environ.get("SIGNALING_URL", "ws://localhost:9000")
 ROOM = os.environ.get("ROOM", "room1")
 DISPLAY_ENV = os.environ.get("DISPLAY", ":1")
 
+# RTP input configuration (for Windows Graphics Capture integration)
+RTP_MODE = os.environ.get("RTP_MODE", "false").lower() == "true"
+RTP_PORT = int(os.environ.get("RTP_PORT", "5000"))
+RTP_CODEC = os.environ.get("RTP_CODEC", "H264")  # H264 or VP8
+
 # Lazy-init Xlib display (opened once, reused across reconnects)
 _xdisplay = None
 _xdisplay_lock = threading.Lock()
@@ -123,17 +128,48 @@ class WebRTCStreamer:
         self.data_channel = None
 
     def build_pipeline(self):
-        pipeline_str = f"""
-        webrtcbin name=webrtc bundle-policy=max-bundle
-        ximagesrc display-name={DISPLAY_ENV} use-damage=false !
-        video/x-raw,framerate=60/1 !
-        videoconvert !
-        queue !
-        vp8enc deadline=1 cpu-used=8 target-bitrate=6000000 keyframe-max-dist=60 !
-        rtpvp8pay pt=96 !
-        application/x-rtp,media=video,encoding-name=VP8,payload=96 !
-        webrtc.
-        """
+        if RTP_MODE:
+            # Receive RTP stream from Windows Graphics Capture streamer
+            if RTP_CODEC == "H264":
+                pipeline_str = f"""
+                webrtcbin name=webrtc bundle-policy=max-bundle
+                udpsrc port={RTP_PORT} caps="application/x-rtp,media=video,clock-rate=90000,encoding-name=H264,payload=96" !
+                rtph264depay !
+                h264parse !
+                queue !
+                avdec_h264 !
+                videoconvert !
+                queue !
+                vp8enc deadline=1 cpu-used=8 target-bitrate=6000000 keyframe-max-dist=60 !
+                rtpvp8pay pt=96 !
+                application/x-rtp,media=video,encoding-name=VP8,payload=96 !
+                webrtc.
+                """
+                print(f"[STREAMER] RTP MODE: Receiving H.264 stream from Windows on port {RTP_PORT}")
+            else:  # VP8
+                pipeline_str = f"""
+                webrtcbin name=webrtc bundle-policy=max-bundle
+                udpsrc port={RTP_PORT} caps="application/x-rtp,media=video,clock-rate=90000,encoding-name=VP8,payload=96" !
+                rtpvp8depay !
+                queue !
+                webrtc.
+                """
+                print(f"[STREAMER] RTP MODE: Receiving VP8 stream from Windows on port {RTP_PORT}")
+        else:
+            # Original X11 capture mode
+            pipeline_str = f"""
+            webrtcbin name=webrtc bundle-policy=max-bundle
+            ximagesrc display-name={DISPLAY_ENV} use-damage=false !
+            video/x-raw,framerate=60/1 !
+            videoconvert !
+            queue !
+            vp8enc deadline=1 cpu-used=8 target-bitrate=6000000 keyframe-max-dist=60 !
+            rtpvp8pay pt=96 !
+            application/x-rtp,media=video,encoding-name=VP8,payload=96 !
+            webrtc.
+            """
+            print("[STREAMER] X11 MODE: Capturing from X11 display")
+        
         print("[STREAMER] Creating pipeline from string...")
         self.pipe = Gst.parse_launch(pipeline_str)
         self.webrtc = self.pipe.get_by_name("webrtc")

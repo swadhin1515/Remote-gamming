@@ -1,0 +1,44 @@
+
+================================================================================
+ERROR LOGGED: 2026-03-27T17:15:09.683Z
+User ID: swadhin.dhal@ibm.com
+================================================================================
+Error Name: TypeError
+Error Message: terminated
+
+Stack Trace:
+TypeError: terminated
+    at Fetch.onAborted (node:internal/deps/undici/undici:12826:53)
+    at Fetch.emit (node:events:508:20)
+    at Fetch.terminate (node:internal/deps/undici/undici:11963:14)
+    at Object.onError (node:internal/deps/undici/undici:12950:38)
+    at Request.onError (node:internal/deps/undici/undici:3015:31)
+    at Object.errorRequest (node:internal/deps/undici/undici:1887:17)
+    at TLSSocket.onHttpSocketClose (node:internal/deps/undici/undici:7661:14)
+    at TLSSocket.emit (node:events:520:22)
+    at node:net:347:12
+    at TCP.done (node:internal/tls/wrap:666:7)
+================================================================================
+
+
+================================================================================
+ERROR LOGGED: 2026-03-27T17:15:09.699Z
+User ID: swadhin.dhal@ibm.com
+================================================================================
+Error Name: TypeError
+Error Message: terminated
+
+Stack Trace:
+TypeError: terminated
+    at Fetch.onAborted (node:internal/deps/undici/undici:12826:53)
+    at Fetch.emit (node:events:508:20)
+    at Fetch.terminate (node:internal/deps/undici/undici:11963:14)
+    at Object.onError (node:internal/deps/undici/undici:12950:38)
+    at Request.onError (node:internal/deps/undici/undici:3015:31)
+    at Object.errorRequest (node:internal/deps/undici/undici:1887:17)
+    at TLSSocket.onHttpSocketClose (node:internal/deps/undici/undici:7661:14)
+    at TLSSocket.emit (node:events:520:22)
+    at node:net:347:12
+    at TCP.done (node:internal/tls/wrap:666:7)
+================================================================================
+

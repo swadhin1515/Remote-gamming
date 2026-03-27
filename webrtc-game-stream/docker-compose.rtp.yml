@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  signaling:
+    build:
+      context: ./signaling
+      dockerfile: Dockerfile
+    ports:
+      - "9000:9000"
+    networks:
+      - webrtc-network
+    restart: unless-stopped
+
+  game-rtp:
+    build:
+      context: ./game
+      dockerfile: Dockerfile
+    environment:
+      - DISPLAY=:1
+      - SIGNALING_URL=ws://signaling:9000
+      - ROOM=room1
+      - RTP_MODE=true
+      - RTP_PORT=5000
+      - RTP_CODEC=H264
+    ports:
+      - "5000:5000/udp"  # RTP input from Windows
+    networks:
+      - webrtc-network
+    restart: unless-stopped
+    depends_on:
+      - signaling
+
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    networks:
+      - webrtc-network
+    restart: unless-stopped
+
+networks:
+  webrtc-network:
+    driver: bridge

@@ -1,0 +1,36 @@
+{
+  "capture": {
+    "mode": "primary",
+    "width": 1920,
+    "height": 1080,
+    "fps": 60,
+    "enableCursor": true,
+    "enableBorderless": true
+  },
+  "encoder": {
+    "codec": "h264",
+    "preset": "low_latency",
+    "bitrate": 5000000,
+    "gopSize": 60,
+    "enableBFrames": false
+  },
+  "streaming": {
+    "mode": "rtp",
+    "rtpTargetHost": "localhost",
+    "rtpTargetPort": 5000
+  },
+  "webrtc": {
+    "signalingServerUrl": "ws://localhost:9000",
+    "stunServer": "stun:stun.l.google.com:19302",
+    "turnServers": []
+  },
+  "performance": {
+    "enableHardwareAcceleration": true,
+    "enableZeroCopy": true,
+    "maxLatencyMs": 50
+  },
+  "logging": {
+    "enabled": true,
+    "logFilePath": "wgc_capture.log"
+  }
+}
