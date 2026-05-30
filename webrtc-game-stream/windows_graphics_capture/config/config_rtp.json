@@ -16,13 +16,17 @@
   },
   "streaming": {
     "mode": "rtp",
-    "rtpTargetHost": "localhost",
+    "rtpTargetHost": "dockerstream1.fyre.ibm.com",
     "rtpTargetPort": 5000
   },
-  "webrtc": {
-    "signalingServerUrl": "ws://localhost:9000",
-    "stunServer": "stun:stun.l.google.com:19302",
-    "turnServers": []
+  "webrtc": {                                                                                                                                                               
+      "signalingServerUrl": "ws://dockerstream1.fyre.ibm.com:30088",                                                                                                          
+      "stunServer": "stun:stun.l.google.com:19302",                                                                                                                           
+      "turnServers": [{                                                                                                                                                       
+        "urls": "turn:9.30.249.236:443?transport=udp",                                                                                                                        
+        "username": "webrtc",                                                                                                                                                 
+        "credential": "SecurePassword123"                                                                                                                                     
+       }]           
   },
   "performance": {
     "enableHardwareAcceleration": true,

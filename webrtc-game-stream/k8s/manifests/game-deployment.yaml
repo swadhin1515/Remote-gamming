@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: game-sessions
+  namespace: default
+  labels:
+    app: game-sessions
+    component: game
+spec:
+  replicas: 0  # Start with 0, scaler will adjust dynamically
+  selector:
+    matchLabels:
+      app: game-session
+  template:
+    metadata:
+      labels:
+        app: game-session
+        component: game
+    spec:
+      restartPolicy: Always
+      containers:
+      - name: game
+        image: game:latest
+        imagePullPolicy: Never
+        env:
+        - name: SIGNALING_URL
+          value: "ws://signaling-service:9000"
+        - name: ROOM
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name  # Use pod name as room suffix
+        - name: DISPLAY
+          value: ":99"
+        - name: GAME_CMD
+          value: "xterm -maximized -e /app/game_launcher.sh"
+        - name: GAME_NAME
+          value: "snake.sh"
+        - name: CAPTURE_MODE
+          value: "container"
+        - name: USERNAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        resources:
+          limits:
+            cpu: "0.9"
+            memory: "1.5Gi"
+          requests:
+            cpu: "0.6"
+            memory: "800Mi"
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: games
+          mountPath: /games
+          readOnly: true
+        - name: dev-uinput
+          mountPath: /dev/uinput
+      volumes:
+      - name: games
+        hostPath:
+          path: /root/webrtc-game-stream/games
+          type: DirectoryOrCreate
+      - name: dev-uinput
+        hostPath:
+          path: /dev/uinput
+          type: CharDevice

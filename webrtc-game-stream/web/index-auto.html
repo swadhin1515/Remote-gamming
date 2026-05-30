@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebRTC Game Stream - Auto Session</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      color: white;
+    }
+    .container {
+      text-align: center;
+      max-width: 1200px;
+      width: 90%;
+    }
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+    .info {
+      background: rgba(255,255,255,0.1);
+      padding: 1rem;
+      border-radius: 10px;
+      margin-bottom: 2rem;
+      backdrop-filter: blur(10px);
+    }
+    .info p {
+      margin: 0.5rem 0;
+      font-size: 1.1rem;
+    }
+    .info .highlight {
+      color: #ffd700;
+      font-weight: bold;
+    }
+    #video-container {
+      position: relative;
+      background: #000;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+      margin-bottom: 1rem;
+    }
+    #video {
+      width: 100%;
+      height: auto;
+      display: block;
+      cursor: pointer;
+    }
+    #status {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.8);
+      padding: 20px 40px;
+      border-radius: 10px;
+      font-size: 1.2rem;
+      text-align: center;
+      max-width: 80%;
+      pointer-events: none;
+    }
+    .instructions {
+      background: rgba(255,255,255,0.1);
+      padding: 1.5rem;
+      border-radius: 10px;
+      backdrop-filter: blur(10px);
+      text-align: left;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .instructions h2 {
+      margin-bottom: 1rem;
+      color: #ffd700;
+    }
+    .instructions ul {
+      list-style-position: inside;
+      line-height: 1.8;
+    }
+    .instructions li {
+      margin-bottom: 0.5rem;
+    }
+    .badge {
+      display: inline-block;
+      background: #4CAF50;
+      color: white;
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      margin-left: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎮 WebRTC Game Stream <span class="badge">Auto-Session</span></h1>
+    
+    <div class="info">
+      <p>✨ <span class="highlight">Automatic Session Management</span> - Each browser tab gets its own isolated game session!</p>
+      <p>🚀 Open multiple tabs and each will automatically create a new game instance</p>
+    </div>
+
+    <div id="video-container">
+      <video id="video" autoplay playsinline muted></video>
+      <div id="status">Initializing...</div>
+    </div>
+
+    <div class="instructions">
+      <h2>📋 How It Works</h2>
+      <ul>
+        <li>🔄 <strong>Automatic Detection:</strong> When you open this page, it automatically requests a new game session</li>
+        <li>🎯 <strong>Isolated Sessions:</strong> Each tab gets a unique session ID and dedicated game pod</li>
+        <li>🎮 <strong>Ready to Play:</strong> Once connected, click the video to lock mouse and start playing</li>
+        <li>🧹 <strong>Auto Cleanup:</strong> When you close the tab, the session is automatically cleaned up</li>
+        <li>📊 <strong>Unlimited Tabs:</strong> Open as many tabs as your server resources allow</li>
+      </ul>
+      
+      <h2 style="margin-top: 1.5rem;">🎯 Controls</h2>
+      <ul>
+        <li><strong>Click video:</strong> Lock mouse pointer for game control</li>
+        <li><strong>ESC key:</strong> Release mouse pointer</li>
+        <li><strong>Arrow keys / WASD:</strong> Game controls (depends on game)</li>
+      </ul>
+    </div>
+  </div>
+
+  <script src="client-auto.js"></script>
+</body>
+</html>

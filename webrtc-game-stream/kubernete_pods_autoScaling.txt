@@ -1,0 +1,160 @@
+/usr/local/bin/kubectl logs -f deployment/session-scaler 
+[2026-03-30 15:40:45,880] [INFO] Loaded in-cluster Kubernetes config
+[2026-03-30 15:40:45,880] [INFO] Starting Session Scaler on port 8080
+[2026-03-30 15:40:45,880] [INFO] Deployment: game-sessions
+[2026-03-30 15:40:45,880] [INFO] Namespace: default
+[2026-03-30 15:40:45,880] [INFO] Base room prefix: room-dockerstream1.fyre.ibm.com
+[2026-03-30 15:40:45,920] [INFO] Current deployment replicas: 0
+[2026-03-30 15:40:46,025] [INFO] server listening on 0.0.0.0:8080
+[2026-03-30 15:40:46,025] [INFO] Session Scaler listening on ws://0.0.0.0:8080
+[2026-03-30 15:41:25,243] [INFO] connection rejected (426 Upgrade Required)
+[2026-03-30 15:41:25,243] [INFO] connection closed
+[2026-03-30 15:43:49,256] [INFO] connection open
+[2026-03-30 15:43:49,589] [INFO] New connection for base room 'room-dockerstream1.fyre.ibm.com' -> assigned 'room-dockerstream1.fyre.ibm.com-1'
+[2026-03-30 15:43:49,589] [INFO] Active connections for 'room-dockerstream1.fyre.ibm.com': 1
+[2026-03-30 15:43:49,589] [INFO] Scaling deployment to 1 replicas
+[2026-03-30 15:43:49,634] [INFO] Scaled deployment game-sessions to 1 replicas
+[2026-03-30 15:43:49,635] [INFO] Sent room assignment: room-dockerstream1.fyre.ibm.com-1
+[2026-03-30 15:43:55,220] [INFO] connection rejected (400 Bad Request)
+[2026-03-30 15:43:55,221] [INFO] connection closed
+[2026-03-30 15:44:25,899] [INFO] Cleaning up connection 139896082376400 from room room-dockerstream1.fyre.ibm.com-1
+[2026-03-30 15:44:25,899] [INFO] Remaining connections for 'room-dockerstream1.fyre.ibm.com': 0
+[2026-03-30 15:44:25,899] [INFO] Scaling deployment to 0 replicas
+[2026-03-30 15:44:25,993] [INFO] Scaled deployment game-sessions to 0 replicas
+[2026-03-30 15:44:25,994] [INFO] connection closed
+[2026-03-30 15:44:26,634] [INFO] connection open
+[2026-03-30 15:44:26,975] [INFO] New connection for base room 'room-dockerstream1.fyre.ibm.com' -> assigned 'room-dockerstream1.fyre.ibm.com-1'
+[2026-03-30 15:44:26,976] [INFO] Active connections for 'room-dockerstream1.fyre.ibm.com': 1
+[2026-03-30 15:44:26,976] [INFO] Scaling deployment to 1 replicas
+[2026-03-30 15:44:27,044] [INFO] Scaled deployment game-sessions to 1 replicas
+[2026-03-30 15:44:27,044] [INFO] Sent room assignment: room-dockerstream1.fyre.ibm.com-1
+[2026-03-30 15:44:31,865] [INFO] connection rejected (400 Bad Request)
+[2026-03-30 15:44:31,865] [INFO] connection closed
+[2026-03-30 15:45:07,282] [INFO] Cleaning up connection 139896101070352 from room room-dockerstream1.fyre.ibm.com-1
+[2026-03-30 15:45:07,283] [INFO] Remaining connections for 'room-dockerstream1.fyre.ibm.com': 0
+[2026-03-30 15:45:07,283] [INFO] Scaling deployment to 0 replicas
+[2026-03-30 15:45:07,400] [INFO] Scaled deployment game-sessions to 0 replicas
+[2026-03-30 15:45:07,400] [INFO] connection closed
+[2026-03-30 15:45:07,944] [INFO] connection open
+[2026-03-30 15:45:08,283] [INFO] New connection for base room 'room-dockerstream1.fyre.ibm.com' -> assigned 'room-dockerstream1.fyre.ibm.com-1'
+[2026-03-30 15:45:08,284] [INFO] Active connections for 'room-dockerstream1.fyre.ibm.com': 1
+[2026-03-30 15:45:08,284] [INFO] Scaling deployment to 1 replicas
+[2026-03-30 15:45:08,386] [INFO] Scaled deployment game-sessions to 1 replicas
+[2026-03-30 15:45:08,386] [INFO] Sent room assignment: room-dockerstream1.fyre.ibm.com-1
+[2026-03-30 15:45:13,404] [INFO] connection rejected (400 Bad Request)
+[2026-03-30 15:45:13,405] [INFO] connection closed
+[2026-03-30 15:46:36,305] [INFO] connection open
+[2026-03-30 15:46:36,670] [INFO] New connection for base room 'room-dockerstream1.fyre.ibm.com' -> assigned 'room-dockerstream1.fyre.ibm.com-2'
+[2026-03-30 15:46:36,670] [INFO] Active connections for 'room-dockerstream1.fyre.ibm.com': 2
+[2026-03-30 15:46:36,670] [INFO] Scaling deployment to 2 replicas
+[2026-03-30 15:46:36,827] [INFO] Scaled deployment game-sessions to 2 replicas
+[2026-03-30 15:46:36,828] [INFO] Sent room assignment: room-dockerstream1.fyre.ibm.com-2
+[2026-03-30 15:46:41,529] [INFO] connection rejected (400 Bad Request)
+[2026-03-30 15:46:41,529] [INFO] connection closed
+[2026-03-30 15:47:03,130] [INFO] Cleaning up connection 139896059394640 from room room-dockerstream1.fyre.ibm.com-2
+[2026-03-30 15:47:03,131] [INFO] Remaining connections for 'room-dockerstream1.fyre.ibm.com': 1
+[2026-03-30 15:47:03,131] [INFO] Scaling deployment to 1 replicas
+[2026-03-30 15:47:03,170] [INFO] Scaled deployment game-sessions to 1 replicas
+[2026-03-30 15:47:03,170] [INFO] connection closed
+[2026-03-30 15:47:03,849] [INFO] connection open
+[2026-03-30 15:47:04,172] [INFO] New connection for base room 'room-dockerstream1.fyre.ibm.com' -> assigned 'room-dockerstream1.fyre.ibm.com-2'
+[2026-03-30 15:47:04,173] [INFO] Active connections for 'room-dockerstream1.fyre.ibm.com': 2
+[2026-03-30 15:47:04,173] [INFO] Scaling deployment to 2 replicas
+[2026-03-30 15:47:04,241] [INFO] Scaled deployment game-sessions to 2 replicas
+[2026-03-30 15:47:04,241] [INFO] Sent room assignment: room-dockerstream1.fyre.ibm.com-2
+[2026-03-30 15:47:09,141] [INFO] connection rejected (400 Bad Request)
+[2026-03-30 15:47:09,141] [INFO] connection closed
+[2026-03-30 15:49:05,534] [INFO] connection open
+[2026-03-30 15:49:05,852] [INFO] New connection for base room 'room-dockerstream1.fyre.ibm.com' -> assigned 'room-dockerstream1.fyre.ibm.com-3'
+[2026-03-30 15:49:05,852] [INFO] Active connections for 'room-dockerstream1.fyre.ibm.com': 3
+[2026-03-30 15:49:05,852] [INFO] Scaling deployment to 3 replicas
+[2026-03-30 15:49:05,997] [INFO] Scaled deployment game-sessions to 3 replicas
+[2026-03-30 15:49:05,997] [INFO] Sent room assignment: room-dockerstream1.fyre.ibm.com-3
+[2026-03-30 15:49:11,208] [INFO] connection rejected (400 Bad Request)
+[2026-03-30 15:49:11,209] [INFO] connection closed
+[2026-03-30 15:50:24,057] [INFO] Cleaning up connection 139896097055376 from room room-dockerstream1.fyre.ibm.com-3
+[2026-03-30 15:50:24,057] [INFO] Remaining connections for 'room-dockerstream1.fyre.ibm.com': 2
+[2026-03-30 15:50:24,057] [INFO] Scaling deployment to 2 replicas
+[2026-03-30 15:50:24,100] [INFO] Scaled deployment game-sessions to 2 replicas
+[2026-03-30 15:50:24,101] [INFO] connection closed
+[2026-03-30 15:50:25,096] [INFO] connection open
+[2026-03-30 15:50:25,457] [INFO] New connection for base room 'room-dockerstream1.fyre.ibm.com' -> assigned 'room-dockerstream1.fyre.ibm.com-3'
+[2026-03-30 15:50:25,457] [INFO] Active connections for 'room-dockerstream1.fyre.ibm.com': 3
+[2026-03-30 15:50:25,458] [INFO] Scaling deployment to 3 replicas
+[2026-03-30 15:50:25,506] [INFO] Scaled deployment game-sessions to 3 replicas
+[2026-03-30 15:50:25,506] [INFO] Sent room assignment: room-dockerstream1.fyre.ibm.com-3
+[2026-03-30 15:50:31,136] [INFO] connection rejected (400 Bad Request)
+[2026-03-30 15:50:31,136] [INFO] connection closed
+[2026-03-30 15:51:29,657] [INFO] Cleaning up connection 139896101063696 from room room-dockerstream1.fyre.ibm.com-3
+[2026-03-30 15:51:29,658] [INFO] Remaining connections for 'room-dockerstream1.fyre.ibm.com': 2
+[2026-03-30 15:51:29,658] [INFO] Scaling deployment to 2 replicas
+[2026-03-30 15:51:29,709] [INFO] Scaled deployment game-sessions to 2 replicas
+[2026-03-30 15:51:29,709] [INFO] connection closed
+[2026-03-30 15:51:30,390] [INFO] connection open
+[2026-03-30 15:51:30,698] [INFO] New connection for base room 'room-dockerstream1.fyre.ibm.com' -> assigned 'room-dockerstream1.fyre.ibm.com-3'
+[2026-03-30 15:51:30,699] [INFO] Active connections for 'room-dockerstream1.fyre.ibm.com': 3
+[2026-03-30 15:51:30,699] [INFO] Scaling deployment to 3 replicas
+[2026-03-30 15:51:30,727] [INFO] Scaled deployment game-sessions to 3 replicas
+[2026-03-30 15:51:30,727] [INFO] Sent room assignment: room-dockerstream1.fyre.ibm.com-3
+[2026-03-30 15:51:35,666] [INFO] connection rejected (400 Bad Request)
+[2026-03-30 15:51:35,666] [INFO] connection closed
+[2026-03-30 15:51:54,322] [INFO] connection open
+[2026-03-30 15:51:54,669] [INFO] New connection for base room 'room-dockerstream1.fyre.ibm.com' -> assigned 'room-dockerstream1.fyre.ibm.com-4'
+[2026-03-30 15:51:54,670] [INFO] Active connections for 'room-dockerstream1.fyre.ibm.com': 4
+[2026-03-30 15:51:54,670] [INFO] Scaling deployment to 4 replicas
+[2026-03-30 15:51:54,708] [INFO] Scaled deployment game-sessions to 4 replicas
+[2026-03-30 15:51:54,708] [INFO] Sent room assignment: room-dockerstream1.fyre.ibm.com-4
+[2026-03-30 15:51:59,739] [INFO] connection rejected (400 Bad Request)
+[2026-03-30 15:51:59,739] [INFO] connection closed
+[2026-03-30 15:52:35,250] [INFO] Cleaning up connection 139896059391632 from room room-dockerstream1.fyre.ibm.com-4
+[2026-03-30 15:52:35,250] [INFO] Remaining connections for 'room-dockerstream1.fyre.ibm.com': 3
+[2026-03-30 15:52:35,250] [INFO] Scaling deployment to 3 replicas
+[2026-03-30 15:52:35,319] [INFO] Scaled deployment game-sessions to 3 replicas
+[2026-03-30 15:52:35,319] [INFO] connection closed
+[2026-03-30 15:52:35,955] [INFO] connection open
+[2026-03-30 15:52:36,269] [INFO] New connection for base room 'room-dockerstream1.fyre.ibm.com' -> assigned 'room-dockerstream1.fyre.ibm.com-4'
+[2026-03-30 15:52:36,269] [INFO] Active connections for 'room-dockerstream1.fyre.ibm.com': 4
+[2026-03-30 15:52:36,269] [INFO] Scaling deployment to 4 replicas
+[2026-03-30 15:52:36,321] [INFO] Scaled deployment game-sessions to 4 replicas
+[2026-03-30 15:52:36,322] [INFO] Sent room assignment: room-dockerstream1.fyre.ibm.com-4
+[2026-03-30 15:52:41,213] [INFO] connection rejected (400 Bad Request)
+[2026-03-30 15:52:41,214] [INFO] connection closed
+[2026-03-30 15:52:44,762] [INFO] Cleaning up connection 139896099652816 from room room-dockerstream1.fyre.ibm.com-3
+[2026-03-30 15:52:44,762] [INFO] Remaining connections for 'room-dockerstream1.fyre.ibm.com': 3
+[2026-03-30 15:52:44,762] [INFO] Scaling deployment to 3 replicas
+[2026-03-30 15:52:44,915] [INFO] Scaled deployment game-sessions to 3 replicas
+[2026-03-30 15:52:44,915] [INFO] connection closed
+[2026-03-30 15:52:48,473] [INFO] Cleaning up connection 139896099655952 from room room-dockerstream1.fyre.ibm.com-4
+[2026-03-30 15:52:48,473] [INFO] Remaining connections for 'room-dockerstream1.fyre.ibm.com': 2
+[2026-03-30 15:52:48,473] [INFO] Scaling deployment to 2 replicas
+[2026-03-30 15:52:48,508] [INFO] Scaled deployment game-sessions to 2 replicas
+[2026-03-30 15:52:48,508] [INFO] connection closed
+[2026-03-30 15:52:49,183] [INFO] connection open
+[2026-03-30 15:52:49,504] [INFO] New connection for base room 'room-dockerstream1.fyre.ibm.com' -> assigned 'room-dockerstream1.fyre.ibm.com-3'
+[2026-03-30 15:52:49,504] [INFO] Active connections for 'room-dockerstream1.fyre.ibm.com': 3
+[2026-03-30 15:52:49,504] [INFO] Scaling deployment to 3 replicas
+[2026-03-30 15:52:49,533] [INFO] Scaled deployment game-sessions to 3 replicas
+[2026-03-30 15:52:49,534] [INFO] Sent room assignment: room-dockerstream1.fyre.ibm.com-3
+[2026-03-30 15:52:54,452] [INFO] connection rejected (400 Bad Request)
+[2026-03-30 15:52:54,452] [INFO] connection closed
+[2026-03-30 15:53:37,887] [INFO] connection open
+[2026-03-30 15:53:38,198] [INFO] New connection for base room 'room-dockerstream1.fyre.ibm.com' -> assigned 'room-dockerstream1.fyre.ibm.com-4'
+[2026-03-30 15:53:38,198] [INFO] Active connections for 'room-dockerstream1.fyre.ibm.com': 4
+[2026-03-30 15:53:38,198] [INFO] Scaling deployment to 4 replicas
+[2026-03-30 15:53:38,245] [INFO] Scaled deployment game-sessions to 4 replicas
+[2026-03-30 15:53:38,246] [INFO] Sent room assignment: room-dockerstream1.fyre.ibm.com-4
+[2026-03-30 15:53:44,060] [INFO] connection rejected (400 Bad Request)
+[2026-03-30 15:53:44,061] [INFO] connection closed
+[2026-03-30 15:55:07,518] [INFO] Cleaning up connection 139896113157392 from room room-dockerstream1.fyre.ibm.com-2
+[2026-03-30 15:55:07,518] [INFO] Remaining connections for 'room-dockerstream1.fyre.ibm.com': 3
+[2026-03-30 15:55:07,518] [INFO] Scaling deployment to 3 replicas
+[2026-03-30 15:55:07,542] [INFO] Scaled deployment game-sessions to 3 replicas
+[2026-03-30 15:55:07,542] [INFO] connection closed
+[2026-03-30 15:55:08,524] [INFO] connection open
+[2026-03-30 15:55:08,849] [INFO] New connection for base room 'room-dockerstream1.fyre.ibm.com' -> assigned 'room-dockerstream1.fyre.ibm.com-4'
+[2026-03-30 15:55:08,849] [INFO] Active connections for 'room-dockerstream1.fyre.ibm.com': 4
+[2026-03-30 15:55:08,849] [INFO] Scaling deployment to 4 replicas
+[2026-03-30 15:55:08,934] [INFO] Scaled deployment game-sessions to 4 replicas
+[2026-03-30 15:55:08,935] [INFO] Sent room assignment: room-dockerstream1.fyre.ibm.com-4
+[2026-03-30 15:55:14,552] [INFO] connection rejected (400 Bad Request)
+[2026-03-30 15:55:14,552] [INFO] connection closed

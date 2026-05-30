@@ -1,0 +1,114 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: session-manager
+  namespace: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: session-manager-role
+rules:
+  # Permissions for GameSession CRD
+  - apiGroups: ["gamestream.example.com"]
+    resources: ["gamesessions"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  
+  # Permissions for Pods
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  
+  # Permissions for Events (for logging)
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: session-manager-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: session-manager-role
+subjects:
+  - kind: ServiceAccount
+    name: session-manager
+    namespace: default
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: session-manager
+  namespace: default
+  labels:
+    app: session-manager
+    component: session-manager
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: session-manager
+  template:
+    metadata:
+      labels:
+        app: session-manager
+        component: session-manager
+    spec:
+      serviceAccountName: session-manager
+      containers:
+      - name: session-manager
+        image: session-manager:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8080
+          name: websocket
+          protocol: TCP
+        env:
+        - name: LISTEN_PORT
+          value: "8080"
+        - name: SIGNALING_WS_URL
+          value: "ws://signaling-service:9000"
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: BASE_ROOM_PREFIX
+          value: "room-dockerstream1.fyre.ibm.com"
+        resources:
+          limits:
+            cpu: "0.5"
+            memory: "512Mi"
+          requests:
+            cpu: "0.25"
+            memory: "256Mi"
+        livenessProbe:
+          tcpSocket:
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        readinessProbe:
+          tcpSocket:
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: session-manager-service
+  namespace: default
+  labels:
+    app: session-manager
+    component: session-manager
+spec:
+  type: ClusterIP
+  selector:
+    app: session-manager
+  ports:
+  - name: websocket
+    port: 8080
+    targetPort: 8080
+    protocol: TCP

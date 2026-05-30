@@ -1,0 +1,467 @@
+Absolutely — here’s a **frame-level jitter buffer diagram** for a WebRTC video stream, shown step by step.
+
+I’ll use a **video-frame view** instead of packet view, because that’s usually the clearest way to understand what the jitter buffer is doing.
+
+***
+
+# 1. Goal of the frame-level jitter buffer
+
+A frame-level jitter buffer sits between:
+
+*   **network packet arrival**
+*   **video decoder**
+
+Its job is to make sure the decoder sees frames in a **stable, decodable order**, even when packets arrive:
+
+*   late
+*   early
+*   out of order
+*   in bursts
+
+***
+
+# 2. End-to-end frame-level diagram
+
+```text
+Sender
+  │
+  │   Frame F1      Frame F2      Frame F3      Frame F4
+  │   (33 ms)       (66 ms)       (99 ms)       (132 ms)
+  │
+  ▼
+Encoder
+  │
+  │   Encoded frames split into RTP packets
+  ▼
+Network
+  │
+  │   Packets arrive unevenly and out of order
+  ▼
+Receiver
+  │
+  ├──────────────────────────────────────────────┐
+  │          Packet Reordering Buffer            │
+  │  - uses RTP sequence numbers                 │
+  │  - reconstructs complete frames              │
+  └──────────────────────────────────────────────┘
+  │
+  ▼
+  ┌──────────────────────────────────────────────┐
+  │            Frame Jitter Buffer               │
+  │  - stores decoded-ready frames               │
+  │  - delays playout slightly                   │
+  │  - releases frames at steady intervals       │
+  └──────────────────────────────────────────────┘
+  │
+  ▼
+Decoder
+  │
+  ▼
+Renderer / Display
+```
+
+***
+
+# 3. The key idea: packets first, frames next
+
+Important distinction:
+
+## Stage A — packet-level reordering
+
+This reconstructs a frame from RTP packets.
+
+## Stage B — frame-level jitter buffering
+
+This schedules **when the complete frame should be released** to the decoder.
+
+So the frame-level jitter buffer works only **after enough packets have arrived to form a usable frame**.
+
+***
+
+# 4. Frame timeline example
+
+Assume sender creates frames at **30 FPS**:
+
+```text
+Frame generation at sender:
+
+F1 ---- 33 ms
+F2 ---- 66 ms
+F3 ---- 99 ms
+F4 ---- 132 ms
+F5 ---- 165 ms
+```
+
+Ideal playout would also be every \~33 ms.
+
+But the network may deliver complete frames like this:
+
+```text
+Complete frame availability at receiver:
+
+F1 at 40 ms
+F2 at 85 ms
+F3 at 88 ms
+F4 at 145 ms
+F5 at 147 ms
+```
+
+See the problem?
+
+*   `F2` is late
+*   `F3` comes almost immediately after `F2`
+*   `F4` is delayed
+*   `F5` bunches with `F4`
+
+If you decode immediately on arrival, playback becomes uneven.
+
+***
+
+# 5. Diagram: without a frame jitter buffer
+
+```text
+Arrival of complete frames:
+
+time ───────────────────────────────────────────────────────────>
+
+F1                 F2 F3                   F4 F5
+|                  |  |                    |  |
+40ms               85 88                   145 147
+```
+
+If the decoder renders as soon as the frame is complete:
+
+```text
+Render timeline (bad):
+
+40ms   → F1
+85ms   → F2
+88ms   → F3
+145ms  → F4
+147ms  → F5
+```
+
+### What user sees
+
+*   long pause after F1
+*   F2 and F3 too close together
+*   long pause again
+*   F4 and F5 too close together
+
+Result:
+
+*   jerky video
+*   unstable motion
+*   visible stutter
+
+***
+
+# 6. Diagram: with a frame-level jitter buffer
+
+The frame jitter buffer introduces a small controlled playout delay.
+
+For example, it decides:
+
+> “I will start playout at 100 ms, then release one frame every 33 ms.”
+
+```text
+Arrival of complete frames:
+
+time ───────────────────────────────────────────────────────────>
+
+F1                 F2 F3                   F4 F5
+|                  |  |                    |  |
+40ms               85 88                   145 147
+
+
+Frame jitter buffer output:
+
+time ───────────────────────────────────────────────────────────>
+
+      F1         F2         F3         F4         F5
+      |          |          |          |          |
+     100ms      133ms      166ms      199ms      232ms
+```
+
+Now the decoder sees a stable cadence.
+
+### What user sees
+
+*   smooth playback
+*   consistent motion
+*   fewer visible stalls
+
+***
+
+# 7. Internal frame-buffer view
+
+Here’s a conceptual diagram of what the frame jitter buffer may contain over time.
+
+***
+
+## At time = 90 ms
+
+Frames received:
+
+*   F1
+*   F2
+*   F3
+
+Buffer status:
+
+```text
+Frame Jitter Buffer @ 90 ms
+
+┌───────────────┬───────────────┬───────────────┬───────────────┐
+│   Frame F1    │   Frame F2    │   Frame F3    │   Empty       │
+│ ready         │ ready         │ ready         │ waiting        │
+└───────────────┴───────────────┴───────────────┴───────────────┘
+```
+
+Playout has not started yet, because the buffer is building safety margin.
+
+***
+
+## At time = 100 ms
+
+Playout begins:
+
+```text
+Output to decoder:
+F1
+```
+
+Remaining buffer:
+
+```text
+┌───────────────┬───────────────┬───────────────┐
+│   Frame F2    │   Frame F3    │   Empty       │
+│ ready         │ ready         │ waiting       │
+└───────────────┴───────────────┴───────────────┘
+```
+
+***
+
+## At time = 133 ms
+
+```text
+Output to decoder:
+F2
+```
+
+If F4 hasn’t arrived yet, buffer may temporarily look like:
+
+```text
+┌───────────────┬───────────────┬───────────────┐
+│   Frame F3    │   Empty       │   Empty       │
+│ ready         │ waiting       │ waiting       │
+└───────────────┴───────────────┴───────────────┘
+```
+
+***
+
+## At time = 145 ms
+
+F4 arrives.
+
+```text
+┌───────────────┬───────────────┬───────────────┐
+│   Frame F3    │   Frame F4    │   Empty       │
+│ ready         │ ready         │ waiting       │
+└───────────────┴───────────────┴───────────────┘
+```
+
+***
+
+## At time = 166 ms
+
+```text
+Output to decoder:
+F3
+```
+
+The key point is:
+
+> The user never sees the ugly arrival pattern directly.
+
+The jitter buffer **absorbs network irregularity** and emits frames at a clean pace.
+
+***
+
+# 8. A more realistic frame dependency diagram
+
+In video codecs like H.264, not every frame is independent.
+
+Example GOP:
+
+```text
+I0  → P1 → P2 → P3 → P4
+```
+
+Where:
+
+*   `I0` = keyframe
+*   `P1..P4` depend on earlier frames
+
+If `P2` is delayed, the decoder may not be able to render `P3` correctly, even if `P3` arrives.
+
+So the frame jitter buffer may store frames like this:
+
+```text
+Frame Buffer State
+
+┌────────┬───────────────┬───────────────┬───────────────┐
+│ I0     │ P1            │ P2            │ P3            │
+│ ready  │ ready         │ missing/late  │ arrived early │
+└────────┴───────────────┴───────────────┴───────────────┘
+```
+
+Even though `P3` arrived, it may not be releasable because `P2` is still missing.
+
+So at frame level, the jitter buffer doesn’t just care about timing — it also cares about:
+
+*   decode order
+*   frame dependencies
+*   whether a frame is actually usable
+
+***
+
+# 9. Frame-level state machine (simple conceptual model)
+
+You can think of each frame as moving through these states:
+
+```text
+Packets arriving
+   ↓
+Frame incomplete
+   ↓
+Frame complete
+   ↓
+Frame held in jitter buffer
+   ↓
+Frame released for decode
+   ↓
+Rendered
+```
+
+Or visually:
+
+```text
+┌──────────────┐
+│ Incomplete   │  <- waiting for missing RTP packets
+└──────┬───────┘
+       │
+       ▼
+┌──────────────┐
+│ Complete     │  <- enough packets for this frame arrived
+└──────┬───────┘
+       │
+       ▼
+┌──────────────┐
+│ Buffered     │  <- held for playout timing stabilization
+└──────┬───────┘
+       │
+       ▼
+┌──────────────┐
+│ Released     │  <- decoder gets it at scheduled playout time
+└──────────────┘
+```
+
+***
+
+# 10. Why frame-level buffering is better than “decode immediately”
+
+Because immediate decode ties playout to **network timing**, and the network is unstable.
+
+The frame jitter buffer decouples:
+
+*   **arrival time**
+    from
+*   **render time**
+
+That is the whole point.
+
+***
+
+# 11. A gaming-specific diagram (your case: WGC → H.264 → WebRTC)
+
+Here’s the exact flow for your game streaming mental model:
+
+```text
+Windows Host
+  │
+  │  WGC captures frames:
+  │  G1   G2   G3   G4   G5
+  ▼
+H.264 Encoder
+  │
+  │  Encoded into RTP packets
+  ▼
+Network
+  │
+  │  Packets for G2 delayed
+  │  Packets for G3 arrive early
+  ▼
+Receiver (VM / browser / client)
+  │
+  ├─ RTP packet reordering
+  │     rebuilds game frame packets correctly
+  │
+  ├─ Frame-level jitter buffer
+  │     stores complete game frames
+  │     outputs them every ~16.6 ms (60 FPS) or ~33 ms (30 FPS)
+  │
+  ▼
+Decoder
+  │
+  ▼
+Display
+```
+
+***
+
+# 12. Compact “before vs after” frame diagram
+
+## Before jitter buffer
+
+```text
+Frame arrival:
+F1........F2.F3.............F4.F5
+
+Render:
+F1........F2.F3.............F4.F5
+```
+
+Uneven = bad
+
+***
+
+## After jitter buffer
+
+```text
+Frame arrival:
+F1........F2.F3.............F4.F5
+
+Buffered playout:
+.....F1...F2...F3...F4...F5...
+```
+
+Even = smooth
+
+***
+
+# 13. One-line takeaway
+
+> A **frame-level jitter buffer** takes complete but irregularly arriving frames and releases them to the decoder at a **stable playout rhythm**.
+
+***
+
+If you want, I can next draw one of these:
+
+1.  **RTP packet → frame reconstruction diagram**
+2.  **I/P/B-frame dependency jitter buffer diagram**
+3.  **60 FPS gaming timeline with late frame drop logic**
+4.  **NACK + jitter buffer interaction diagram**
+
+If I were you, the **best next one** would be:  
+**“60 FPS gaming timeline with late-frame drop logic”** — that makes WebRTC behavior very concrete.

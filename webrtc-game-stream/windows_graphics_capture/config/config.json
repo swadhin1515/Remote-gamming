@@ -1,6 +1,6 @@
 {
   "capture": {
-    "mode": "primary",
+    "mode": "window",
     "width": 1920,
     "height": 1080,
     "fps": 60,
@@ -14,10 +14,14 @@
     "gopSize": 60,
     "enableBFrames": false
   },
-  "webrtc": {
-    "signalingServerUrl": "ws://localhost:9000",
-    "stunServer": "stun:stun.l.google.com:19302",
-    "turnServers": []
+  "webrtc": {                                                                                                                                                               
+      "signalingServerUrl": "ws://dockerstream1.fyre.ibm.com:30088",                                                                                                          
+      "stunServer": "stun:stun.l.google.com:19302",                                                                                                                           
+      "turnServers": [{                                                                                                                                                       
+        "urls": "turn:9.30.249.236:443?transport=udp",                                                                                                                        
+        "username": "webrtc",                                                                                                                                                 
+        "credential": "SecurePassword123"                                                                                                                                     
+       }]           
   },
   "performance": {
     "enableHardwareAcceleration": true,

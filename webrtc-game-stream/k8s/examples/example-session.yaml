@@ -1,0 +1,59 @@
+apiVersion: gamestream.example.com/v1
+kind: GameSession
+metadata:
+  name: session-player1
+  namespace: default
+spec:
+  username: "player1"
+  room: "room-dockerstream1.fyre.ibm.com-player1"
+  gameName: "snake.sh"
+  captureMode: "container"
+  signalingUrl: "ws://signaling-service:9000"
+  sessionTimeout: 30  # 30 minutes timeout
+  resources:
+    limits:
+      cpu: "1.0"
+      memory: "4Gi"
+    requests:
+      cpu: "0.3"
+      memory: "2Gi"
+---
+apiVersion: gamestream.example.com/v1
+kind: GameSession
+metadata:
+  name: session-player2
+  namespace: default
+spec:
+  username: "player2"
+  room: "room-dockerstream1.fyre.ibm.com-player2"
+  gameName: "snake.sh"
+  captureMode: "container"
+  signalingUrl: "ws://signaling-service:9000"
+  sessionTimeout: 60  # 60 minutes timeout
+  resources:
+    limits:
+      cpu: "2.0"
+      memory: "4Gi"
+    requests:
+      cpu: "1.0"
+      memory: "2Gi"
+---
+apiVersion: gamestream.example.com/v1
+kind: GameSession
+metadata:
+  name: session-no-timeout
+  namespace: default
+spec:
+  username: "player3"
+  room: "room-dockerstream1.fyre.ibm.com-player3"
+  gameName: "snake.sh"
+  captureMode: "container"
+  signalingUrl: "ws://signaling-service:9000"
+  sessionTimeout: 0  # No timeout - runs indefinitely
+  resources:
+    limits:
+      cpu: "2.0"
+      memory: "4Gi"
+    requests:
+      cpu: "1.0"
+      memory: "2Gi"

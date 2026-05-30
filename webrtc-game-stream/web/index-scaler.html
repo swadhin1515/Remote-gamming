@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebRTC Game Stream - Dynamic Scaling</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      color: white;
+    }
+    .container {
+      text-align: center;
+      max-width: 1200px;
+      width: 90%;
+    }
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+    .info {
+      background: rgba(255,255,255,0.1);
+      padding: 1rem;
+      border-radius: 10px;
+      margin-bottom: 2rem;
+      backdrop-filter: blur(10px);
+    }
+    .info p {
+      margin: 0.5rem 0;
+      font-size: 1.1rem;
+    }
+    .info .highlight {
+      color: #ffd700;
+      font-weight: bold;
+    }
+    #video-container {
+      position: relative;
+      background: #000;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+      margin-bottom: 1rem;
+    }
+    #video {
+      width: 100%;
+      height: auto;
+      display: block;
+      cursor: pointer;
+    }
+    #status {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.8);
+      padding: 20px 40px;
+      border-radius: 10px;
+      font-size: 1.2rem;
+      text-align: center;
+      max-width: 80%;
+      pointer-events: none;
+    }
+    .instructions {
+      background: rgba(255,255,255,0.1);
+      padding: 1.5rem;
+      border-radius: 10px;
+      backdrop-filter: blur(10px);
+      text-align: left;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .instructions h2 {
+      margin-bottom: 1rem;
+      color: #ffd700;
+    }
+    .instructions ul {
+      list-style-position: inside;
+      line-height: 1.8;
+    }
+    .instructions li {
+      margin-bottom: 0.5rem;
+    }
+    .badge {
+      display: inline-block;
+      background: #4CAF50;
+      color: white;
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      margin-left: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎮 WebRTC Game Stream <span class="badge">K8s Scaling</span></h1>
+    
+    <div class="info">
+      <p>⚡ <span class="highlight">Kubernetes Dynamic Scaling</span> - Deployment scales automatically!</p>
+      <p>🚀 Each tab triggers deployment to scale up by 1 replica</p>
+      <p>📉 Closing tabs scales down automatically</p>
+    </div>
+
+    <div id="video-container">
+      <video id="video" autoplay playsinline muted></video>
+      <div id="status">Initializing...</div>
+    </div>
+
+    <div class="instructions">
+      <h2>📋 How It Works</h2>
+      <ul>
+        <li>🔄 <strong>Auto-Scaling:</strong> Opening a tab increases deployment replicas by 1</li>
+        <li>🎯 <strong>Kubernetes Native:</strong> Uses Deployment scaling, not individual pods</li>
+        <li>🎮 <strong>Replica Assignment:</strong> Each tab gets assigned to a specific replica</li>
+        <li>🧹 <strong>Scale Down:</strong> Closing tabs automatically reduces replicas</li>
+        <li>📊 <strong>Resource Efficient:</strong> Only runs pods when needed</li>
+      </ul>
+      
+      <h2 style="margin-top: 1.5rem;">🎯 Controls</h2>
+      <ul>
+        <li><strong>Click video:</strong> Lock mouse pointer for game control</li>
+        <li><strong>ESC key:</strong> Release mouse pointer</li>
+        <li><strong>Arrow keys / WASD:</strong> Game controls (depends on game)</li>
+      </ul>
+      
+      <h2 style="margin-top: 1.5rem;">⚙️ Architecture</h2>
+      <ul>
+        <li><strong>Session Scaler:</strong> Monitors connections and scales deployment</li>
+        <li><strong>Game Deployment:</strong> Starts at 0 replicas, scales dynamically</li>
+        <li><strong>Room Assignment:</strong> Each replica gets unique room (e.g., room-test-1, room-test-2)</li>
+      </ul>
+    </div>
+  </div>
+
+  <script src="client-scaler.js"></script>
+</body>
+</html>
